@@ -194,7 +194,7 @@ pnpm は依存のビルドスクリプトを既定で無効にしており、許
 
 - Dockerfile は multi-stage（build: `node:26-slim` で `pnpm install --frozen-lockfile` → tsdown → `pnpm prune --prod`。runtime: `node:26-slim` + Litestream バイナリ + `dist/` + `node_modules`）。非 root ユーザーで実行し、`/data` を VOLUME にする。
 - GitHub Actions は 2 ジョブ。`check`（oxlint、`oxfmt --check`、tsc、vitest）は PR と main で実行する。`image` は main のみで、`needs: check`。`ubuntu-24.04-arm` 上で linux/arm64 をビルドする。Action は pinact で SHA 固定する。
-- **イメージ名は Python 版と同じ `ghcr.io/oha-4/mk8dx-bot`、タグは `beta` と `<sha>`**。同じイメージ名の中でもタグは独立しているので、Python 版が参照する `latest` には影響しない。パッケージは Python 版のリポジトリに紐づいているため、Package settings の Manage Actions access で `oha-4/mk8dx-bot` に Write 権限を付与する。CI のタグ指定には `latest` を含めない（spec: deployment の旧 bot との分離）。
+- **イメージ名は Python 版と同じ `ghcr.io/oha-4/mk8dx-bot`、タグは `edge` と `<sha>`**。タグは `docker/metadata-action` で付ける（`type=edge,branch=main` と `type=sha`、`flavor: latest=false`）。main への push ごとのビルドに `edge` を付けるのは metadata-action が標準で用意している慣習で、`beta`（プレリリースの段階）や `nightly`（定期ビルド）とは意味が異なる。metadata-action の `labels` 出力は渡さない。含まれる `org.opencontainers.image.source` が GHCR のパッケージとリポジトリの紐づけに使われ、Python 版に紐づいた既存パッケージへの影響を確認していないため。同じイメージ名の中でもタグは独立しているので、Python 版が参照する `latest` には影響しない。パッケージは Python 版のリポジトリに紐づいているため、Package settings の Manage Actions access で `oha-4/mk8dx-bot` に Write 権限を付与する。CI のタグ指定には `latest` を含めない（spec: deployment の旧 bot との分離）。
 - 代替案は別のイメージ名（`mk8dx-bot-next` など）。権限の設定は不要になるが、切り替え時にイメージ名の変更が必要になるため、採用しない。
 
 ### D10. デプロイ
@@ -204,7 +204,7 @@ pnpm は依存のビルドスクリプトを既定で無効にしており、許
   - 名前付きボリューム `mk8dx-bot-data:/data`。
   - ログは Python 版と同じ json-file（10m x 3）。
 - Discord Gateway の intents は `Guilds`・`GuildMessages`・`MessageContent`。MessageContent は特権 intent なので、beta 用アプリケーションの Developer Portal で有効にする。beta 用の bot は導入先が少なく、100 サーバー未満なので審査は不要。本番アプリケーションはすでに承認済み。
-- `deploy/compose.yaml` は `ghcr.io/oha-4/mk8dx-bot:beta` を参照する。
+- `deploy/compose.yaml` は `ghcr.io/oha-4/mk8dx-bot:edge` を参照する。
 - `.env` は Dockhand 上で設定し、リポジトリには `deploy/.env.example` だけを置く。
 
 ## Risks / Trade-offs
@@ -221,7 +221,7 @@ pnpm は依存のビルドスクリプトを既定で無効にしており、許
 
 1. Discord Developer Portal で beta 用のアプリケーションを作り、Message Content intent を有効にしてトークンを発行する。開発用ギルドに招待する。
 2. Cloudflare R2 にバケットを作り、そのバケット専用の API トークン（Object Read & Write）を発行する。
-3. GHCR パッケージ `mk8dx-bot` の Manage Actions access で、`oha-4/mk8dx-bot` に Write 権限を付与する。main に merge し、`:beta` が公開され、`:latest` が変わっていないことを確認する。
+3. GHCR パッケージ `mk8dx-bot` の Manage Actions access で、`oha-4/mk8dx-bot` に Write 権限を付与する。main に merge し、`:edge` が公開され、`:latest` が変わっていないことを確認する。
 4. Cloudflare の請求通知を設定し、R2 の使用量が無料枠に近づいたら気付けるようにする。
 5. Dockhand でスタック `mk8dx-bot` を作成し、`.env` を設定して起動する。`/ping` とエラー通知、R2 にレプリカが作られていることを確認する。
 6. 復元のリハーサル: スタックを停止し、ボリュームを削除して起動し、自動で復元されることを確認する。

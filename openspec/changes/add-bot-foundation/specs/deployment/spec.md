@@ -14,11 +14,11 @@ main ブランチへの push と pull request のたびに、lint・format 差�
 - **THEN** チェックが失敗として報告される
 
 ### Requirement: arm64 イメージの公開
-main ブランチへの push のたびに linux/arm64 のコンテナイメージがビルドされ、コンテナレジストリに、コミット SHA のタグと並行稼働用のチャンネルタグ `beta` の両方で公開されなければならない（SHALL）。品質チェックが失敗したコミットのイメージは公開してはならない（MUST NOT）。
+main ブランチへの push のたびに linux/arm64 のコンテナイメージがビルドされ、コンテナレジストリに、コミット SHA のタグと、main の最新コミットを指す `edge` タグの両方で公開されなければならない（SHALL）。品質チェックが失敗したコミットのイメージは公開してはならない（MUST NOT）。
 
 #### Scenario: main への push
 - **WHEN** 品質チェックが通るコミットを main に push する
-- **THEN** そのコミット SHA のタグと `beta` タグで arm64 イメージが公開される
+- **THEN** そのコミット SHA のタグと `edge` タグで arm64 イメージが公開される
 
 #### Scenario: チェックが失敗した push
 - **WHEN** テストが失敗するコミットを main に push する

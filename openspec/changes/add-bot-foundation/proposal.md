@@ -10,7 +10,7 @@
 - Discord bot として起動し、型付きで定義したコマンドを、スラッシュコマンドとプレフィックスコマンド（`%` / `％`、エイリアスあり）の両方で受け付ける。プレフィックスのない通常メッセージを機能に渡すメッセージリスナーも用意する。動作確認用のコマンドは `ping` の 1 つだけ
 - コマンド実行中のエラーを、利用者向けの応答と開発者向けのログチャンネル通知に分けて扱う（旧 dev cog 相当）
 - SQLite を永続化先とし、起動時にスキーママイグレーションを適用する。DB ファイルは Cloudflare R2 へ継続的にレプリケーションし、DB が失われた場合は起動時に自動で復元する
-- arm64 コンテナイメージを GHCR の既存のイメージ名に `beta` タグで公開し、OCI A1 上の Dockhand スタックとして、Python 版とは別の beta 用 Discord アプリケーションで並行稼働させる
+- arm64 コンテナイメージを GHCR の既存のイメージ名に `edge` タグ（main の最新）で公開し、OCI A1 上の Dockhand スタックとして、Python 版とは別の beta 用 Discord アプリケーションで並行稼働させる
 - feature ベースのディレクトリ構成（`src/core` / `src/db` / `src/features/*`）を確立し、以後の機能 change が同じ型で追加できるようにする
 
 対象外: 旧機能（lounge / sokuji / track / gather / tool）の移植、設定 DB のスキーマ、OBS overlay（Firebase RTDB + mk8dx.pages.dev）、画像生成、i18n、シャーディング、本番アプリケーションへの切り替え。

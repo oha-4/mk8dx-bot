@@ -1,7 +1,7 @@
 # 本番（OCI A1 の Dockhand スタック mk8dx-bot）用。値は Dockhand の .env で設定する（deploy/.env.example を参照）
 services:
   bot:
-    image: ghcr.io/oha-4/mk8dx-bot:beta
+    image: ghcr.io/oha-4/mk8dx-bot:edge
     restart: unless-stopped
     environment:
       DISCORD_TOKEN: ${DISCORD_TOKEN:?}

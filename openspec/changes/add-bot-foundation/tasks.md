@@ -60,12 +60,12 @@
 ## 8. CI
 
 - [x] 8.1 `.github/workflows/ci.yaml` の `check` ジョブ（PR と main、oxlint・`oxfmt --check`・tsc・vitest）を作り、型エラーを入れた PR で失敗することを確認する
-- [ ] 8.2 GHCR パッケージ `mk8dx-bot` の Manage Actions access で `oha-4/mk8dx-bot` に Write 権限を付与したうえで、同じワークフローの `image` ジョブ（main のみ、`needs: check`、`ubuntu-24.04-arm`、linux/arm64、`ghcr.io/oha-4/mk8dx-bot` に `beta` と `<sha>`。`latest` は含めない）を作る。main への push で `:beta` が公開され、`:latest` の digest が変わっていないことを確認する
+- [ ] 8.2 GHCR パッケージ `mk8dx-bot` の Manage Actions access で `oha-4/mk8dx-bot` に Write 権限を付与したうえで、同じワークフローの `image` ジョブ（main のみ、`needs: check`、`ubuntu-24.04-arm`、linux/arm64、`docker/metadata-action` で `ghcr.io/oha-4/mk8dx-bot` に `edge` と `<sha>`。`latest` は含めない）を作る。main への push で `:edge` が公開され、`:latest` の digest が変わっていないことを確認する
 - [x] 8.3 pinact で Action を SHA 固定し、pinact の検査ワークフローを追加して、それが通ることを確認する
 
 ## 9. 本番での並行稼働（統合確認）
 
-- [ ] 9.1 R2 のバケットとバケット専用の API トークンを用意し、Cloudflare の請求通知を設定する。A1 上で `docker pull ghcr.io/oha-4/mk8dx-bot:beta` が成功することを確認する
+- [ ] 9.1 R2 のバケットとバケット専用の API トークンを用意し、Cloudflare の請求通知を設定する。A1 上で `docker pull ghcr.io/oha-4/mk8dx-bot:edge` が成功することを確認する
 - [ ] 9.2 Dockhand にスタック `mk8dx-bot` を作成して起動し、`/ping` の応答・エラーログチャンネルへの通知・R2 上のレプリカを確認する。あわせて、Python 版の `mk8dx-bot-py-bot-1` が稼働を続け、そのコマンドが変わっていないことを確認する
 - [ ] 9.3 本番で復元のリハーサル（停止 → ボリューム削除 → 起動 → 自動復元）を行い、結果を `docs/restore.md` に追記する
 - [ ] 9.4 1 週間稼働させた後、R2 のメトリクスで Class A 操作数とストレージ使用量を確認し、月換算で無料枠内に収まっていることを `docs/restore.md` に記録する

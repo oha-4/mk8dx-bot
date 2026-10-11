@@ -56,13 +56,24 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # ghcr.io/oha-4/mk8dx-bot は Python 版と共有している。Python 版が参照する latest は公開しない（spec: deployment）
+      #   edge: main の最新コミット / <sha>: コミットごと（Python 版と同じ full SHA）
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/oha-4/mk8dx-bot
+          flavor: |
+            latest=false
+          tags: |
+            type=edge,branch=main
+            type=sha,prefix=,format=long
+
+      # labels は渡さない。org.opencontainers.image.source は GHCR のパッケージとリポジトリの紐づけに使われ、
+      # Python 版に紐づいた既存パッケージへの影響を確認していないため
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           platforms: linux/arm64
           push: true
-          tags: |
-            ghcr.io/oha-4/mk8dx-bot:beta
-            ghcr.io/oha-4/mk8dx-bot:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha,scope=mk8dx-bot-ts
           cache-to: type=gha,mode=max,scope=mk8dx-bot-ts
