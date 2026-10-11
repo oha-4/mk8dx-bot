@@ -1,0 +1,101 @@
+# mk8dx-bot
+
+MK8DX コミュニティ向けの Discord bot（TypeScript 版）。
+
+## ローカル開発
+
+### 準備
+
+1. [mise](https://mise.jdx.dev/) で Node と pnpm を入れ、依存をインストールする
+
+    ```sh
+    mise install
+    pnpm install
+    ```
+
+2. Discord Developer Portal で開発用のアプリケーションを用意する
+    - Bot の **Message Content Intent** を有効にする（プレフィックスコマンドとメッセージリスナーに必要）
+    - OAuth2 の URL Generator で `bot` と `applications.commands` を選び、開発用ギルドに招待する
+3. `.env.example` をコピーして `.env` を作り、値を埋める。開発中は `DEV_GUILD_ID` を指定すると、コマンドがそのギルドにだけ即座に登録される
+
+### 起動とチェック
+
+```sh
+pnpm dev            # tsx watch で起動（.env を読む）
+pnpm typecheck      # tsc --noEmit
+pnpm lint           # oxlint
+pnpm format         # oxfmt で整形（CI は format:check）
+pnpm test           # vitest（*.test-d.ts の型テストも含む）
+pnpm build          # tsdown で dist/main.js を出力
+pnpm db:generate    # スキーマの変更から drizzle/ にマイグレーションを生成
+```
+
+マイグレーションは起動時に、Discord に接続する前に自動で適用される。
+
+## 環境変数
+
+| 変数                     | 必須 | 説明                                                                         |
+| ------------------------ | ---- | ---------------------------------------------------------------------------- |
+| `DISCORD_TOKEN`          | ○    | bot トークン                                                                 |
+| `DISCORD_APPLICATION_ID` | ○    | Discord アプリケーション ID（コマンド登録に使う）                            |
+| `ERROR_LOG_CHANNEL_ID`   | ○    | 想定外エラーの通知先チャンネル ID                                            |
+| `DEV_GUILD_ID`           | -    | 指定するとそのギルドにだけコマンドを登録する。未指定ならグローバルに登録する |
+| `DATABASE_PATH`          | ○    | SQLite ファイルのパス（コンテナでは `/data/bot.db`）                         |
+| `LOG_LEVEL`              | -    | `fatal` / `error` / `warn` / `info` / `debug` / `trace`（既定: `info`）      |
+
+コンテナで動かすときの Litestream 用の変数は `deploy/.env.example` を参照。
+
+## feature の追加方法
+
+機能は `src/features/<name>/` に置く。外側は feature で分け、中は次の層に分ける。`src/features/ping/` が見本。
+
+```
+src/features/<name>/
+  commands/      入口: 引数を受け取り -> usecase -> view -> 返信
+  listeners/     入口: メッセージを解釈し -> usecase -> view -> 返信
+  usecases/      処理の本体: (deps, input) => result
+  views/         result => BaseMessageOptions（embed、画像の添付など）
+  repository.ts  DB アクセス（Drizzle）
+  schema.ts      テーブル定義
+  index.ts       Feature を export する
+```
+
+- 依存の向きは `commands / listeners -> usecases -> repository / 外部サービス`。views は usecase の結果の型だけを参照する
+- **usecases は `discord.js` を import しない**（oxlint で禁止している）。DB や外部サービス、時計などは引数（deps）で受け取る。スラッシュ・プレフィックス・リスナーが同じ usecase を呼べ、Discord の偽オブジェクトなしでテストできる
+- views は `BaseMessageOptions` を返す。`interaction.reply()` にも `message.reply()` にもそのまま渡せる
+- 処理が Discord の中で完結する小さな機能なら、usecase と view は省略して commands に直接書いてよい
+
+### コマンドとリスナー
+
+```ts
+// スラッシュコマンド: options の宣言から execute の引数の型が決まる
+export const searchSlash = defineSlashCommand({
+    name: 'search',
+    description: 'プレイヤーを検索します',
+    options: { name: { type: 'string', description: 'プレイヤー名', required: true } },
+    execute: (interaction, { name }) => interaction.reply(renderResult(search(deps, name))),
+})
+
+// プレフィックスコマンド（% と ％ の両方で反応する）。args は宣言順の位置引数
+export const searchPrefix = definePrefixCommand({
+    name: 'search',
+    aliases: ['s', 'S'], // 大文字と小文字を区別して完全一致で照合する
+    args: [{ name: 'name', type: 'string', required: true, rest: true }],
+    execute: (message, { name }) => message.reply(renderResult(search(deps, name))),
+})
+
+// 独自の書式が必要なら args の代わりに parse を渡す
+definePrefixCommand({ name: 'vs', usage: '%vs <tag...>', parse: (tokens) => ({ tags: tokens }), execute: ... })
+
+// プレフィックスコマンドとして処理されなかったギルドのメッセージ（bot と webhook を除く）を受け取る
+export const resultListener = defineMessageListener({ name: 'result', handle: async (message) => { ... } })
+```
+
+- 利用者に伝えるべき失敗は `UserFacingError` を throw する。スラッシュでは本人にだけ、プレフィックスでは返信で表示され、エラーログチャンネルには通知されない
+- それ以外の例外は、利用者に汎用メッセージを返し、エラーログチャンネルに通知される。リスナーの例外は利用者に返さない
+
+### 登録
+
+1. `src/features/<name>/index.ts` で `Feature`（`slashCommands` / `prefixCommands` / `listeners`）を export する
+2. `src/features/index.ts` の `features` に追加する
+3. テーブルがあれば `src/db/schema.ts` で `schema.ts` を re-export し、`pnpm db:generate` でマイグレーションを生成してコミットする
