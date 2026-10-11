@@ -59,9 +59,9 @@
 
 ## 8. CI
 
-- [ ] 8.1 `.github/workflows/ci.yaml` の `check` ジョブ（PR と main、oxlint・`oxfmt --check`・tsc・vitest）を作り、型エラーを入れた PR で失敗することを確認する
+- [x] 8.1 `.github/workflows/ci.yaml` の `check` ジョブ（PR と main、oxlint・`oxfmt --check`・tsc・vitest）を作り、型エラーを入れた PR で失敗することを確認する
 - [ ] 8.2 GHCR パッケージ `mk8dx-bot` の Manage Actions access で `oha-4/mk8dx-bot` に Write 権限を付与したうえで、同じワークフローの `image` ジョブ（main のみ、`needs: check`、`ubuntu-24.04-arm`、linux/arm64、`ghcr.io/oha-4/mk8dx-bot` に `beta` と `<sha>`。`latest` は含めない）を作る。main への push で `:beta` が公開され、`:latest` の digest が変わっていないことを確認する
-- [ ] 8.3 pinact で Action を SHA 固定し、pinact の検査ワークフローを追加して、それが通ることを確認する
+- [x] 8.3 pinact で Action を SHA 固定し、pinact の検査ワークフローを追加して、それが通ることを確認する
 
 ## 9. 本番での並行稼働（統合確認）
 
