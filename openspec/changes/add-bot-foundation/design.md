@@ -198,7 +198,7 @@ entrypoint.sh
 ### D9. コンテナと CI
 
 - Dockerfile は multi-stage（deps: `npm ci --omit=dev`、build: `npm ci` → tsdown。runtime: `node:26-slim` + Litestream バイナリ + `dist/` + `node_modules`）。非 root ユーザーで実行し、`/data` を VOLUME にする。
-- GitHub Actions は 2 ジョブ。`check`（oxlint、`oxfmt --check`、tsc、vitest）は PR と main で実行する。Node は `actions/setup-node` で入れ、`cache: npm` で `~/.npm` をキャッシュする。`image` は main のみで、`needs: check`。`ubuntu-24.04-arm` 上で linux/arm64 をビルドする。Action は pinact で SHA 固定する。
+- GitHub Actions は 2 ジョブ。`check`（oxlint、`oxfmt --check`、tsc、vitest）は PR と main で実行する。Node は `actions/setup-node` で入れ、`cache: npm` で `~/.npm` をキャッシュする。`image` は main のみで、`needs: check`。`ubuntu-24.04-arm` 上で linux/arm64 をビルドする。Action は pinact で SHA 固定し、公開から 7 日未満のバージョンは拒否する（`.github/pinact.yaml`）。pinact のバージョンは mise.toml で管理し、CI の pinact ワークフローでは mise-action で同じ pinact を入れてから pinact-action を実行する。pinact-action は PATH に pinact があればそれを使い、なければ自身が固定したバージョンを入れる作りのため。PR では reviewdog で違反箇所をコメントする。
 - **イメージ名は Python 版と同じ `ghcr.io/oha-4/mk8dx-bot`、タグは `edge` と `<sha>`**。タグは `docker/metadata-action` で付ける（`type=edge,branch=main` と `type=sha`、`flavor: latest=false`）。main への push ごとのビルドに `edge` を付けるのは metadata-action が標準で用意している慣習で、`beta`（プレリリースの段階）や `nightly`（定期ビルド）とは意味が異なる。metadata-action の `labels` 出力は渡さない。含まれる `org.opencontainers.image.source` が GHCR のパッケージとリポジトリの紐づけに使われ、Python 版に紐づいた既存パッケージへの影響を確認していないため。同じイメージ名の中でもタグは独立しているので、Python 版が参照する `latest` には影響しない。パッケージは Python 版のリポジトリに紐づいているため、Package settings の Manage Actions access で `oha-4/mk8dx-bot` に Write 権限を付与する。CI のタグ指定には `latest` を含めない（spec: deployment の旧 bot との分離）。
 - 代替案は別のイメージ名（`mk8dx-bot-next` など）。権限の設定は不要になるが、切り替え時にイメージ名の変更が必要になるため、採用しない。
 

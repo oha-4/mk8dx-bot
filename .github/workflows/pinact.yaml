@@ -5,11 +5,13 @@ on:
     paths:
       - '.github/workflows/**'
       - '.github/pinact.yaml'
+      - 'mise.toml'
   push:
     branches: [main]
     paths:
       - '.github/workflows/**'
       - '.github/pinact.yaml'
+      - 'mise.toml'
 
 permissions:
   contents: read
@@ -18,13 +20,24 @@ jobs:
   pinact:
     name: Verify actions are pinned
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      # reviewdog で PR に違反箇所をコメントする
+      pull-requests: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: suzuki-shunsuke/pinact-action@896d595f299e71d65b9d28349d6956abe144390a # v3.0.0
+
+      # mise.toml の pinact を入れる。pinact-action は PATH に pinact があればそれを使う
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          install_args: pinact
+
+      - uses: suzuki-shunsuke/pinact-action@2a42f29b3397967439ed46e7650f3045f49699f9 # v3.0.1
         with:
           fix: 'false'
           verify: 'true'
+          review: ${{ github.event_name == 'pull_request' }}
           github_token: ${{ github.token }}
           config: .github/pinact.yaml

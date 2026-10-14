@@ -1,3 +1,7 @@
 # Node のバージョンは .node-version で管理する（CI の actions/setup-node と同じファイルを読む）
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
+
+[tools]
+# CI でも使われる: pinact-action は PATH に pinact があればそれを使う（.github/workflows/pinact.yaml）
+pinact = "5.0.0"

@@ -28,6 +28,7 @@ npm run format         # oxfmt で整形（CI は format:check）
 npm test               # vitest（*.test-d.ts の型テストも含む）
 npm run build          # tsdown で dist/main.js を出力
 npm run db:generate    # スキーマの変更から drizzle/ にマイグレーションを生成
+pinact run             # GitHub Actions を SHA に固定する（mise.toml の pinact。CI でも同じバージョンで検査する）
 ```
 
 `.npmrc` で、依存のインストールスクリプトを実行しない設定（`ignore-scripts`）と、公開から 7 日経ったバージョンだけを使う設定（`min-release-age`）を入れている。新しく公開されたばかりのバージョンを入れようとすると解決に失敗するので、その場合は 7 日経った版を指定する。
