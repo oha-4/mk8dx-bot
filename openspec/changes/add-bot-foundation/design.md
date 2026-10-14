@@ -74,7 +74,7 @@ features/<name>/
 ```
 
 - **usecases** は `discord.js` を import しない。DB や外部サービス、時計などは引数（deps）で受け取る。そのため、Discord の偽オブジェクトなしでテストできる。スラッシュ・プレフィックス・リスナー・（将来の）ボタンや OBS 配信が、同じ usecase を呼ぶ。
-- **views** は Discord の `BaseMessageOptions` を返す。`interaction.reply()` と `message.reply()` のどちらにもそのまま渡せるので、入口ごとに違うのは返信の 1 行だけになる。
+- **views** は Discord の `BaseMessageOptions` を返す。`interaction.reply()` と `message.channel.send()`（や `message.reply()`）のどちらにもそのまま渡せるので、入口ごとに違うのは返信の 1 行だけになる。
 - **commands / listeners** は薄く保ち、引数の解釈と、usecase・view・返信の組み立てだけを行う。
 - usecase と view は、処理が Discord の中で完結する小さな機能（`ping` のようなもの）では省略してよい。
 - 規約は oxlint の `no-restricted-imports` で、`features/*/usecases/**` から `discord.js` を import できないようにする（ファイルのパスごとの override が oxlint で使えることは、実装時に確認する）。
@@ -101,7 +101,7 @@ export const pingPrefix = definePrefixCommand({
   name: 'ping',
   aliases: ['p'],
   args: [],
-  execute: (message) => message.reply(run(message.client)),   // Message
+  execute: (message) => message.channel.send(run(message.client)),   // Message
 })
 ```
 
@@ -141,7 +141,8 @@ export const pingPrefix = definePrefixCommand({
 ### D5. エラーの振り分けは dispatcher に集約する
 
 - dispatcher は入口の種類を知っているので、エラー時の返信も入口ごとに行う。
-- `UserFacingError(message)` を throw すると、そのメッセージを返す（スラッシュでは ephemeral、プレフィックスでは元のメッセージへの返信）。通知はしない。
+- プレフィックスコマンドの通常の結果は、チャンネルへの通常の投稿（`message.channel.send`）にする。旧 Python 版の応答の大半（`ctx.send` が 37 か所、`ctx.reply` は 2 か所）と同じ見た目にし、即時集計の表や挙手の一覧のようにチャンネル全体で見る結果を自然に出すため。返信にするかは各コマンドの入口で選べる。
+- `UserFacingError(message)` を throw すると、そのメッセージを返す（スラッシュでは ephemeral、プレフィックスでは元のメッセージへの返信）。エラーは誰のどのメッセージへのものかを示すため返信にし、`allowedMentions: { repliedUser: false }` で通知は鳴らさず、`failIfNotExists: false` で元のメッセージが消えていても送る。エラーログチャンネルへの通知はしない。
 - それ以外の例外は、汎用メッセージを同じ方法で返し、`error-reporter` が embed（種類・メッセージ・ギルドとチャンネル・時刻と、スラッシュではコマンド名とオプション、プレフィックスとリスナーではメッセージ本文）と `traceback.txt` をログチャンネルに送る。
 - リスナーの例外は利用者に返さず、想定外のものだけを通知する。通常の会話に bot が割り込まないようにするため。
 - スラッシュでは応答の状態（未応答 / deferred / replied）を見て、`reply` / `editReply` / `followUp` を使い分ける。
@@ -163,12 +164,12 @@ export const pingPrefix = definePrefixCommand({
 entrypoint.sh
   1. litestream restore -if-db-not-exists -if-replica-exists $DATABASE_PATH
   2. exec litestream replicate -exec "node dist/main.js"
-       |- WAL を監視し、R2 に 10 秒間隔で同期
+       |- WAL を監視し、R2 に 1 時間間隔で同期
        |- SIGTERM を子（node）に転送し、子の終了後に最終同期して終了
 ```
 
 - 復元をマイグレーションより前に確実に行うため、この順序をコンテナの起動シーケンスで保証する（spec: data-persistence の自動復元）。
-- `sync-interval: 10s`（spec の 30 秒以内を満たす）。Litestream は変更があった区間しかアップロードしない。10 秒ごとに必ず書き込みがある最悪の場合でも、同期（約 26 万回）+ 0.5 系のコンパクション（約 9.6 万回）+ スナップショットや一覧取得（数千回）で、R2 の Class A は月約 36 万回となり、無料枠の 100 万回に収まる。この見積もりは仕組みから計算したもので、実測ではないため、稼働後に R2 のメトリクスで確認する。
+- `sync-interval: 1h`。この bot のデータ（設定や履歴）は、A1 が突然失われた場合に最大 1 時間分を失っても許容できる。停止時（デプロイや再起動）は最終同期するので失わない。Litestream は変更があった区間しかアップロードしないので、R2 の Class A は同期が月最大約 720 回と、コンパクションやスナップショットを合わせても無料枠の 100 万回に対して十分小さい。稼働後に R2 のメトリクスで確認する。代替案は `10s`（失うのは最大 10 秒分。無料枠には収まる）と、Litestream をやめて日次の `VACUUM INTO` を R2 に上げる方法（起動時の自動復元を自前で作る必要がある）。
 - スナップショットは 24 時間ごと、保持は 7 日（任意時点への復元の範囲）。
 - Litestream の arm64 バイナリは、公式イメージから multi-stage でコピーし、バージョンを固定する。
 - ローカル開発では Litestream を使わず、`npm run dev` で直接起動する。開発用の秘密値は SOPS（age）で暗号化した `.env.dev.sops.yaml` に置き、`MISE_ENV=dev` のときだけ読まれる `mise.dev.toml` の `[env]` で復号して渡す。復元の確認は `deploy/compose.local.yaml`（`file://` のレプリカ）で行う。

@@ -72,7 +72,8 @@ src/features/<name>/
 
 - 依存の向きは `commands / listeners -> usecases -> repository / 外部サービス`。views は usecase の結果の型だけを参照する
 - **usecases は `discord.js` を import しない**（oxlint で禁止している）。DB や外部サービス、時計などは引数（deps）で受け取る。スラッシュ・プレフィックス・リスナーが同じ usecase を呼べ、Discord の偽オブジェクトなしでテストできる
-- views は `BaseMessageOptions` を返す。`interaction.reply()` にも `message.reply()` にもそのまま渡せる
+- views は `BaseMessageOptions` を返す。`interaction.reply()` にも `message.channel.send()` にもそのまま渡せる
+- プレフィックスコマンドの結果はチャンネルへの通常の投稿（`message.channel.send`）にする。本人に向けた応答だけを返信にしたい場合は `message.reply` を使う
 - 処理が Discord の中で完結する小さな機能なら、usecase と view は省略して commands に直接書いてよい
 
 ### コマンドとリスナー
@@ -91,7 +92,7 @@ export const searchPrefix = definePrefixCommand({
     name: 'search',
     aliases: ['s', 'S'], // 大文字と小文字を区別して完全一致で照合する
     args: [{ name: 'name', type: 'string', required: true, rest: true }],
-    execute: (message, { name }) => message.reply(renderResult(search(deps, name))),
+    execute: (message, { name }) => message.channel.send(renderResult(search(deps, name))),
 })
 
 // 独自の書式が必要なら args の代わりに parse を渡す
@@ -101,7 +102,7 @@ definePrefixCommand({ name: 'vs', usage: '%vs <tag...>', parse: (tokens) => ({ t
 export const resultListener = defineMessageListener({ name: 'result', handle: async (message) => { ... } })
 ```
 
-- 利用者に伝えるべき失敗は `UserFacingError` を throw する。スラッシュでは本人にだけ、プレフィックスでは返信で表示され、エラーログチャンネルには通知されない
+- 利用者に伝えるべき失敗は `UserFacingError` を throw する。スラッシュでは本人にだけ、プレフィックスでは通知を鳴らさない返信で表示され、エラーログチャンネルには通知されない
 - それ以外の例外は、利用者に汎用メッセージを返し、エラーログチャンネルに通知される。リスナーの例外は利用者に返さない
 
 ### 登録

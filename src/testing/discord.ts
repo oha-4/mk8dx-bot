@@ -65,6 +65,7 @@ export const fakeMessage = (
         client: fakeClient(),
         inGuild: () => extra.inGuild ?? true,
         reply: vi.fn(async () => ({})),
+        channel: { send: vi.fn(async () => ({})) },
     }
     return message as typeof message & Message<true>
 }

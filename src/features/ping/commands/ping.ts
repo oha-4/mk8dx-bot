@@ -18,5 +18,5 @@ export const pingPrefix = definePrefixCommand({
     aliases: ['p'],
     description: 'bot の応答速度を確認します',
     args: [],
-    execute: (message) => message.reply(run(message.client)),
+    execute: (message) => message.channel.send(run(message.client)),
 })

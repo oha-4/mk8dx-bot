@@ -13,8 +13,8 @@ dbs:
     replica:
       # 本番: s3://<bucket>/<path>（Cloudflare R2）、ローカル検証: file:///replica
       url: ${LITESTREAM_REPLICA_URL}
-      # spec の「30 秒以内に複製」を満たしつつ R2 の無料枠に収める
-      sync-interval: 10s
+      # A1 が突然失われたときに失うのは最大 1 時間分にする（停止時は最終同期するため失わない）
+      sync-interval: 1h
       # R2 では https://<account_id>.r2.cloudflarestorage.com と auto。認証情報は
       # LITESTREAM_ACCESS_KEY_ID / LITESTREAM_SECRET_ACCESS_KEY から読まれる
       endpoint: ${LITESTREAM_S3_ENDPOINT}

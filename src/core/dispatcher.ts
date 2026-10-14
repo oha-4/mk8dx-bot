@@ -23,6 +23,10 @@ type Dependencies = {
     logger: Logger
 }
 
+/** 誰のどのメッセージへの応答かがわかるよう返信にし、通知は鳴らさない。元のメッセージが消えていても送る */
+const replyQuietly = (message: Message<true>, content: string) =>
+    message.reply({ content, allowedMentions: { repliedUser: false }, failIfNotExists: false })
+
 /** スラッシュコマンドの応答状態に合わせて、実行者にだけ見えるメッセージを返す */
 const respondEphemeral = async (interaction: ChatInputCommandInteraction, content: string) => {
     if (interaction.deferred && !interaction.replied) {
@@ -85,10 +89,10 @@ export const createDispatcher = ({ registry, reporter, logger }: Dependencies): 
                 await command.run(message, invocation)
             } catch (error) {
                 if (error instanceof UserFacingError) {
-                    await safely(() => message.reply(error.message), 'エラーの応答')
+                    await safely(() => replyQuietly(message, error.message), 'エラーの応答')
                     return
                 }
-                await safely(() => message.reply(GENERIC_ERROR_MESSAGE), 'エラーの応答')
+                await safely(() => replyQuietly(message, GENERIC_ERROR_MESSAGE), 'エラーの応答')
                 await reporter.report(error, {
                     kind: 'prefix',
                     content: message.content,

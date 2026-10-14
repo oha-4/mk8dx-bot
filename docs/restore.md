@@ -9,10 +9,10 @@ bot のデータは SQLite（コンテナ内の `/data/bot.db`、ボリューム
   1. litestream restore -if-db-not-exists -if-replica-exists /data/bot.db
        DB ファイルがなく、レプリカがあれば最新の状態を復元する。DB があれば何もしない
   2. litestream replicate -exec "node /app/dist/main.js"
-       10 秒ごとに変更を R2 へ同期する。停止時は bot の終了後に最終同期する
+       1 時間ごとに変更を R2 へ同期する。停止時は bot の終了後に最終同期する
 ```
 
-- 失うデータは最大で直近の約 10 秒分
+- A1 が突然失われた場合、失うデータは最大で直近の 1 時間分。停止（デプロイや再起動）では失わない
 - スナップショットは 24 時間ごと、保持は 7 日（`deploy/litestream.yml`）。7 日以内なら任意の時点に戻せる
 - ボリュームを失ったときは、**何もせずスタックを起動し直せば自動で復元される**
 

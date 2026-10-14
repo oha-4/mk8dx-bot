@@ -10,10 +10,11 @@ describe('ping', () => {
         expect(interaction.reply).toHaveBeenCalledWith({ content: 'Pong! 42ms', flags: MessageFlags.Ephemeral })
     })
 
-    test('%ping は元のメッセージへの返信で遅延を返す', async () => {
+    test('%ping はチャンネルへの通常の投稿で遅延を返す', async () => {
         const message = fakeMessage('%ping')
         await pingPrefix.run(message, { name: 'ping', tokens: [] })
-        expect(message.reply).toHaveBeenCalledWith({ content: 'Pong! 42ms' })
+        expect(message.channel.send).toHaveBeenCalledWith({ content: 'Pong! 42ms' })
+        expect(message.reply).not.toHaveBeenCalled()
     })
 
     test('エイリアス p を持つ', () => {

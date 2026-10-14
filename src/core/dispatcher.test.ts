@@ -29,6 +29,11 @@ const setup = (behavior: Behavior = async () => {}) => {
 }
 
 const ephemeral = (content: string) => ({ content, flags: MessageFlags.Ephemeral })
+const quietReply = (content: string) => ({
+    content,
+    allowedMentions: { repliedUser: false },
+    failIfNotExists: false,
+})
 
 describe('スラッシュコマンド', () => {
     test('登録されたコマンドを実行する', async () => {
@@ -136,7 +141,7 @@ describe('プレフィックスコマンドとリスナー', () => {
         })
         const message = fakeMessage('%ping')
         await dispatcher.handleMessage(message)
-        expect(message.reply).toHaveBeenCalledWith('プレイヤーが見つかりません')
+        expect(message.reply).toHaveBeenCalledWith(quietReply('プレイヤーが見つかりません'))
         expect(reporter.report).not.toHaveBeenCalled()
     })
 
@@ -147,7 +152,7 @@ describe('プレフィックスコマンドとリスナー', () => {
         })
         const message = fakeMessage('%ping')
         await dispatcher.handleMessage(message)
-        expect(message.reply).toHaveBeenCalledWith(GENERIC_ERROR_MESSAGE)
+        expect(message.reply).toHaveBeenCalledWith(quietReply(GENERIC_ERROR_MESSAGE))
         expect(reporter.report).toHaveBeenCalledWith(error, {
             kind: 'prefix',
             content: '%ping',

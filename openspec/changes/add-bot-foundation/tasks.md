@@ -49,8 +49,8 @@
 ## 7. コンテナと Litestream
 
 - [x] 7.1 `Dockerfile`（multi-stage、`node:26-slim`、固定バージョンの Litestream バイナリ、非 root、`/data` の VOLUME）を作り、`docker build --platform linux/arm64` が成功することを確認する
-- [x] 7.2 `deploy/litestream.yml`（`sync-interval: 10s`、スナップショット 24 時間、保持 7 日、レプリカ URL と認証情報は環境変数）と `deploy/entrypoint.sh`（`restore -if-db-not-exists -if-replica-exists` → `replicate -exec`）を作り、`shellcheck` が通ることを確認する
-- [x] 7.3 `deploy/compose.local.yaml`（`file://` のレプリカ）でコンテナを起動し、DB への書き込みから 30 秒以内にレプリカに反映されることを確認する
+- [x] 7.2 `deploy/litestream.yml`（`sync-interval: 1h`、スナップショット 24 時間、保持 7 日、レプリカ URL と認証情報は環境変数）と `deploy/entrypoint.sh`（`restore -if-db-not-exists -if-replica-exists` → `replicate -exec`）を作り、`shellcheck` が通ることを確認する
+- [x] 7.3 `deploy/compose.local.yaml`（`file://` のレプリカ）でコンテナを起動し、DB への書き込みが同期間隔（当初 10 秒で確認）でレプリカに反映され、1 時間に変更した後も停止時の最終同期で反映されることを確認する
 - [x] 7.4 同じ構成で、ボリュームを削除してから再起動したときに自動で復元されること、DB があるときは復元されないことを確認する
 - [x] 7.5 `docker stop` で、アプリが exit 0 で終了し、Litestream の最終同期のあとにコンテナが止まること（`stop_grace_period: 30s` 以内）をログで確認する
 - [x] 7.6 `deploy/compose.yaml`（本番用、名前付きボリューム、json-file 10m x 3、`stop_grace_period: 30s`）と `deploy/.env.example` を作り、`docker compose -f deploy/compose.yaml config` が通ることを確認する
