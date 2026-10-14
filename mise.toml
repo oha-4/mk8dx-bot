@@ -1,2 +1,3 @@
-[tools]
-node = "26.11.1"
+# Node のバージョンは .node-version で管理する（CI の actions/setup-node と同じファイルを読む）
+[settings]
+idiomatic_version_file_enable_tools = ["node"]

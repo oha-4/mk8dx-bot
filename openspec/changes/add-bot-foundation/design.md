@@ -179,7 +179,7 @@ entrypoint.sh
 
 | 用途 | 採用 | 備考 |
 |---|---|---|
-| バージョン管理 | mise（`mise.toml` で node 26 を固定） | CI も `jdx/mise-action` で同じ node を入れる |
+| バージョン管理 | `.node-version`（node 26） | ローカルは mise（`mise.toml` の `idiomatic_version_file_enable_tools` で読む）、CI は `actions/setup-node` の `node-version-file`。Dockerfile のベースイメージのタグも揃える |
 | パッケージマネージャ | npm（Node 同梱） | 設定は `.npmrc` |
 | 開発実行 | tsx（watch） | |
 | 型チェック | `tsc --noEmit`（strict、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`） | |
@@ -198,7 +198,7 @@ entrypoint.sh
 ### D9. コンテナと CI
 
 - Dockerfile は multi-stage（deps: `npm ci --omit=dev`、build: `npm ci` → tsdown。runtime: `node:26-slim` + Litestream バイナリ + `dist/` + `node_modules`）。非 root ユーザーで実行し、`/data` を VOLUME にする。
-- GitHub Actions は 2 ジョブ。`check`（oxlint、`oxfmt --check`、tsc、vitest）は PR と main で実行する。`image` は main のみで、`needs: check`。`ubuntu-24.04-arm` 上で linux/arm64 をビルドする。Action は pinact で SHA 固定する。
+- GitHub Actions は 2 ジョブ。`check`（oxlint、`oxfmt --check`、tsc、vitest）は PR と main で実行する。Node は `actions/setup-node` で入れ、`cache: npm` で `~/.npm` をキャッシュする。`image` は main のみで、`needs: check`。`ubuntu-24.04-arm` 上で linux/arm64 をビルドする。Action は pinact で SHA 固定する。
 - **イメージ名は Python 版と同じ `ghcr.io/oha-4/mk8dx-bot`、タグは `edge` と `<sha>`**。タグは `docker/metadata-action` で付ける（`type=edge,branch=main` と `type=sha`、`flavor: latest=false`）。main への push ごとのビルドに `edge` を付けるのは metadata-action が標準で用意している慣習で、`beta`（プレリリースの段階）や `nightly`（定期ビルド）とは意味が異なる。metadata-action の `labels` 出力は渡さない。含まれる `org.opencontainers.image.source` が GHCR のパッケージとリポジトリの紐づけに使われ、Python 版に紐づいた既存パッケージへの影響を確認していないため。同じイメージ名の中でもタグは独立しているので、Python 版が参照する `latest` には影響しない。パッケージは Python 版のリポジトリに紐づいているため、Package settings の Manage Actions access で `oha-4/mk8dx-bot` に Write 権限を付与する。CI のタグ指定には `latest` を含めない（spec: deployment の旧 bot との分離）。
 - 代替案は別のイメージ名（`mk8dx-bot-next` など）。権限の設定は不要になるが、切り替え時にイメージ名の変更が必要になるため、採用しない。
 

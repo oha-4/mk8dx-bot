@@ -2,7 +2,7 @@
 
 ## 1. プロジェクトの土台
 
-- [x] 1.1 `mise.toml`（node 26）、`.npmrc`（`ignore-scripts`、`min-release-age`）、`package.json`（`"type": "module"`、`engines`）を作り、`mise install && npm install` が成功することを確認する
+- [x] 1.1 `.node-version`（node 26）と、それを mise に読ませる `mise.toml`、`.npmrc`（`ignore-scripts`、`min-release-age`）、`package.json`（`"type": "module"`、`engines`）を作り、`mise install && npm install` が成功することを確認する
 - [x] 1.2 `tsconfig.json`（strict、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、NodeNext）を作り、空の `src/main.ts` で `npm run typecheck` が通ることを確認する
 - [x] 1.3 oxlint・oxfmt を exact バージョンで追加して設定ファイルを置き、`npm run lint` と `npm run format:check` が通ることを確認する
 - [x] 1.4 Vitest を追加し、サンプルテスト 1 件で `npm test` が通ることを確認する（サンプルは 2 章で置き換える）

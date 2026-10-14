@@ -6,7 +6,7 @@ MK8DX コミュニティ向けの Discord bot（TypeScript 版）。
 
 ### 準備
 
-1. [mise](https://mise.jdx.dev/) で Node を入れ、npm で依存をインストールする
+1. [mise](https://mise.jdx.dev/) で Node を入れ、npm で依存をインストールする（Node のバージョンは `.node-version` にあり、`mise.toml` の設定で mise がそれを読む）
 
     ```sh
     mise install
