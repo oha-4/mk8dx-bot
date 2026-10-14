@@ -6,12 +6,14 @@ on:
       - '.github/workflows/**'
       - '.github/pinact.yaml'
       - 'mise.toml'
+      - 'mise.ci.toml'
   push:
     branches: [main]
     paths:
       - '.github/workflows/**'
       - '.github/pinact.yaml'
       - 'mise.toml'
+      - 'mise.ci.toml'
 
 permissions:
   contents: read
@@ -24,12 +26,14 @@ jobs:
       contents: read
       # reviewdog で PR に違反箇所をコメントする
       pull-requests: write
+    env:
+      MISE_ENV: ci
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      # pinact と reviewdog を mise.toml のバージョンで使う
+      # pinact と reviewdog を mise.toml / mise.ci.toml のバージョンで使う
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
           install_args: pinact aqua:reviewdog/reviewdog

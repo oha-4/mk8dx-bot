@@ -1,0 +1,3 @@
+# CI でだけ使うツール
+[tools]
+"aqua:reviewdog/reviewdog" = "0.21.2"
