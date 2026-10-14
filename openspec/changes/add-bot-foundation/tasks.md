@@ -43,8 +43,8 @@
 
 - [x] 6.1 `src/core/shutdown.ts` を実装し、SIGTERM / SIGINT で受け付けの停止 → DB と client のクローズ → exit 0、10 秒を超えたら強制終了することをテストで確認する
 - [x] 6.2 `src/main.ts` で、設定 → DB を開く → migrate → client（intents は `Guilds`・`GuildMessages`・`MessageContent`）→ ready 後にコマンドを一括登録（`DEV_GUILD_ID` の有無で登録先を切り替え）→ login の順に組み立て、`npm run typecheck` と全テストが通ることを確認する
-- [ ] 6.3 beta 用の Discord アプリケーション（Message Content intent を有効化）と開発用ギルドで `npm run dev` を起動し、`/ping`・`%ping`・`％p` の応答、`%unknown` に無応答なこと、想定外エラーのログチャンネル通知、コマンド削除後の再起動で登録から消えることを手動で確認する
-- [ ] 6.4 README に、ローカル開発の手順（mise、`.env`、`npm run dev`、開発用ギルドへの登録）と、feature の追加方法（`commands/`・`listeners/`・`usecases/`・`views/`・`repository.ts` の役割、依存の向き、usecase を省略してよい条件、`features/index.ts` への登録）を書き、その手順どおりに起動できることを確認する
+- [ ] 6.3 開発用の Discord アプリケーション（Message Content intent を有効化）の値を `.env.dev.sops.yaml` に入れ、開発用ギルドで `MISE_ENV=dev mise exec -- npm run dev` を起動し、`/ping`・`%ping`・`％p` の応答、`%unknown` に無応答なこと、想定外エラーのログチャンネル通知、コマンド削除後の再起動で登録から消えることを手動で確認する
+- [ ] 6.4 README に、ローカル開発の手順（mise、`.env.dev.sops.yaml`（または `.env`）、`MISE_ENV=dev mise exec -- npm run dev`、開発用ギルドへの登録）と、feature の追加方法（`commands/`・`listeners/`・`usecases/`・`views/`・`repository.ts` の役割、依存の向き、usecase を省略してよい条件、`features/index.ts` への登録）を書き、その手順どおりに起動できることを確認する
 
 ## 7. コンテナと Litestream
 

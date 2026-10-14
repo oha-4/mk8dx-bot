@@ -13,15 +13,22 @@ MK8DX コミュニティ向けの Discord bot（TypeScript 版）。
     npm install
     ```
 
-2. Discord Developer Portal で開発用のアプリケーションを用意する
+2. Discord Developer Portal で開発用のアプリケーションを用意する（A1 で動かす beta 用とは別にする。同じトークンで同時に接続すると、両方が同じメッセージに応答するため）
     - Bot の **Message Content Intent** を有効にする（プレフィックスコマンドとメッセージリスナーに必要）
     - OAuth2 の URL Generator で `bot` と `applications.commands` を選び、開発用ギルドに招待する
-3. `.env.example` をコピーして `.env` を作り、値を埋める。開発中は `DEV_GUILD_ID` を指定すると、コマンドがそのギルドにだけ即座に登録される
+3. 開発用の値を `.env.dev.sops.yaml`（SOPS + age で暗号化）に書く。`.sops.yaml` に公開鍵が登録された age の鍵が必要
+
+    ```sh
+    sops edit .env.dev.sops.yaml
+    ```
+
+    `DEV_GUILD_ID` を指定すると、コマンドがそのギルドにだけ即座に登録される。`.env.example` をコピーした `.env` でも起動できる
 
 ### 起動とチェック
 
 ```sh
-npm run dev            # tsx watch で起動（.env を読む）
+MISE_ENV=dev mise exec -- npm run dev   # .env.dev.sops.yaml を復号して tsx watch で起動
+npm run dev            # .env を読んで起動
 npm run typecheck      # tsc --noEmit
 npm run lint           # oxlint
 npm run format         # oxfmt で整形（CI は format:check）

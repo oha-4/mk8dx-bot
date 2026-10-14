@@ -1,0 +1,10 @@
+# SOPS の暗号化ルール
+# age の recipient（公開鍵）は 1 行ずつ、持ち主をコメントで書く。
+# 追加・削除したら `sops updatekeys <ファイル>` で再暗号化する。
+creation_rules:
+  - path_regex: \.env\.[a-z]+\.sops\.yaml$
+    # 直前の行に `sops:plain` と書いたキーだけ値を平文で残す（既定はすべて暗号化）
+    unencrypted_comment_regex: 'sops:plain'
+    key_groups:
+      - age:
+          - age127gdvsgqux5eh297vjexvlpstkgff0qx0yvrs6tvnvgkdm5r8v6qd7wmaa # Yoshito Ohata

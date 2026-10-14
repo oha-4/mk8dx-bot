@@ -32,5 +32,5 @@
 
 - 新規コード: リポジトリ全体（現状は OpenSpec のみ）
 - 新規依存: discord.js v14、drizzle-orm / drizzle-kit、better-sqlite3、Litestream、oxlint / oxfmt、Vitest ほか
-- 外部システム: beta 用の新しい Discord アプリケーション（bot トークン、Message Content intent を有効化）、Cloudflare R2 バケット、GHCR、OCI A1 上の Dockhand スタック（新規）
+- 外部システム: beta 用と開発用の新しい Discord アプリケーション（それぞれ bot トークン、Message Content intent を有効化）、Cloudflare R2 バケット、GHCR、OCI A1 上の Dockhand スタック（新規）
 - 既存システム: GHCR パッケージ `ghcr.io/oha-4/mk8dx-bot` に新リポジトリからの書き込み権限を追加する。Python 版のコンテナ（`mk8dx-bot-py`）と、それが参照する `latest` タグには手を入れない

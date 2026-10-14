@@ -6,4 +6,5 @@ coverage/
 .env
 .env.*
 !.env.example
+!.env.*.sops.yaml
 .DS_Store

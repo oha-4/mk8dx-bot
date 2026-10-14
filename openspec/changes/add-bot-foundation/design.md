@@ -171,7 +171,7 @@ entrypoint.sh
 - `sync-interval: 10s`（spec の 30 秒以内を満たす）。Litestream は変更があった区間しかアップロードしない。10 秒ごとに必ず書き込みがある最悪の場合でも、同期（約 26 万回）+ 0.5 系のコンパクション（約 9.6 万回）+ スナップショットや一覧取得（数千回）で、R2 の Class A は月約 36 万回となり、無料枠の 100 万回に収まる。この見積もりは仕組みから計算したもので、実測ではないため、稼働後に R2 のメトリクスで確認する。
 - スナップショットは 24 時間ごと、保持は 7 日（任意時点への復元の範囲）。
 - Litestream の arm64 バイナリは、公式イメージから multi-stage でコピーし、バージョンを固定する。
-- ローカル開発では Litestream を使わず、`npm run dev` で直接起動する。復元の確認は `deploy/compose.local.yaml`（`file://` のレプリカ）で行う。
+- ローカル開発では Litestream を使わず、`npm run dev` で直接起動する。開発用の秘密値は SOPS（age）で暗号化した `.env.dev.sops.yaml` に置き、`MISE_ENV=dev` のときだけ読まれる `mise.dev.toml` の `[env]` で復号して渡す。復元の確認は `deploy/compose.local.yaml`（`file://` のレプリカ）で行う。
 
 代替案は Litestream を sidecar コンテナにする方法。「復元が終わってからアプリが起動する」順序と、停止時の最終同期を、compose の依存関係だけで保証するのが難しいため採用しない。
 
@@ -211,6 +211,7 @@ entrypoint.sh
 - Discord Gateway の intents は `Guilds`・`GuildMessages`・`MessageContent`。MessageContent は特権 intent なので、beta 用アプリケーションの Developer Portal で有効にする。beta 用の bot は導入先が少なく、100 サーバー未満なので審査は不要。本番アプリケーションはすでに承認済み。
 - `deploy/compose.yaml` は `ghcr.io/oha-4/mk8dx-bot:edge` を参照する。
 - `.env` は Dockhand 上で設定し、リポジトリには `deploy/.env.example` だけを置く。
+- Discord のアプリケーションは本番用（Python 版）・beta 用（A1 の edge スタック）・開発用（ローカル）の 3 つに分ける。同じトークンで複数のプロセスが接続すると、シャーディングなしでは両方が同じイベントを受けて二重に応答し、コマンドの登録も上書きし合うため。
 
 ## Risks / Trade-offs
 
