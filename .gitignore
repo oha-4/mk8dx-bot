@@ -8,3 +8,4 @@ coverage/
 !.env.example
 !.env.*.sops.yaml
 .DS_Store
+.playwright-mcp/

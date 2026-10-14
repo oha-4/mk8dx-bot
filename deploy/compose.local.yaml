@@ -1,5 +1,5 @@
 # ローカルでの検証用。Litestream のレプリカを R2 ではなくコンテナ内のボリューム（file://）に置く
-#   docker compose -f deploy/compose.local.yaml up --build
+#   MISE_ENV=dev mise exec -- docker compose -f deploy/compose.local.yaml up --build
 name: mk8dx-bot-local
 
 services:
@@ -8,8 +8,12 @@ services:
       context: ..
     platform: linux/arm64
     image: mk8dx-bot:local
-    env_file: ../.env
     environment:
+      DISCORD_TOKEN: ${DISCORD_TOKEN:?}
+      DISCORD_APPLICATION_ID: ${DISCORD_APPLICATION_ID:?}
+      ERROR_LOG_CHANNEL_ID: ${ERROR_LOG_CHANNEL_ID:?}
+      DEV_GUILD_ID: ${DEV_GUILD_ID:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
       DATABASE_PATH: /data/bot.db
       LITESTREAM_REPLICA_URL: file:///replica/bot
       LITESTREAM_S3_ENDPOINT: ''

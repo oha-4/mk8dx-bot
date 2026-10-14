@@ -43,16 +43,16 @@
 
 - [x] 6.1 `src/core/shutdown.ts` を実装し、SIGTERM / SIGINT で受け付けの停止 → DB と client のクローズ → exit 0、10 秒を超えたら強制終了することをテストで確認する
 - [x] 6.2 `src/main.ts` で、設定 → DB を開く → migrate → client（intents は `Guilds`・`GuildMessages`・`MessageContent`）→ ready 後にコマンドを一括登録（`DEV_GUILD_ID` の有無で登録先を切り替え）→ login の順に組み立て、`npm run typecheck` と全テストが通ることを確認する
-- [ ] 6.3 開発用の Discord アプリケーション（Message Content intent を有効化）の値を `.env.dev.sops.yaml` に入れ、開発用ギルドで `MISE_ENV=dev mise exec -- npm run dev` を起動し、`/ping`・`%ping`・`％p` の応答、`%unknown` に無応答なこと、想定外エラーのログチャンネル通知、コマンド削除後の再起動で登録から消えることを手動で確認する
-- [ ] 6.4 README に、ローカル開発の手順（mise、`.env.dev.sops.yaml`（または `.env`）、`MISE_ENV=dev mise exec -- npm run dev`、開発用ギルドへの登録）と、feature の追加方法（`commands/`・`listeners/`・`usecases/`・`views/`・`repository.ts` の役割、依存の向き、usecase を省略してよい条件、`features/index.ts` への登録）を書き、その手順どおりに起動できることを確認する
+- [x] 6.3 開発用の Discord アプリケーション（Message Content intent を有効化）の値を `.env.dev.sops.yaml` に入れ、開発用ギルドで `MISE_ENV=dev mise exec -- npm run dev` を起動し、`/ping`・`%ping`・`％p` の応答、`%unknown` に無応答なこと、想定外エラーのログチャンネル通知、コマンド削除後の再起動で登録から消えることを手動で確認する
+- [x] 6.4 README に、ローカル開発の手順（mise、`.env.dev.sops.yaml`（または `.env`）、`MISE_ENV=dev mise exec -- npm run dev`、開発用ギルドへの登録）と、feature の追加方法（`commands/`・`listeners/`・`usecases/`・`views/`・`repository.ts` の役割、依存の向き、usecase を省略してよい条件、`features/index.ts` への登録）を書き、その手順どおりに起動できることを確認する
 
 ## 7. コンテナと Litestream
 
 - [x] 7.1 `Dockerfile`（multi-stage、`node:26-slim`、固定バージョンの Litestream バイナリ、非 root、`/data` の VOLUME）を作り、`docker build --platform linux/arm64` が成功することを確認する
 - [x] 7.2 `deploy/litestream.yml`（`sync-interval: 10s`、スナップショット 24 時間、保持 7 日、レプリカ URL と認証情報は環境変数）と `deploy/entrypoint.sh`（`restore -if-db-not-exists -if-replica-exists` → `replicate -exec`）を作り、`shellcheck` が通ることを確認する
-- [ ] 7.3 `deploy/compose.local.yaml`（`file://` のレプリカ）でコンテナを起動し、DB への書き込みから 30 秒以内にレプリカに反映されることを確認する
-- [ ] 7.4 同じ構成で、ボリュームを削除してから再起動したときに自動で復元されること、DB があるときは復元されないことを確認する
-- [ ] 7.5 `docker stop` で、アプリが exit 0 で終了し、Litestream の最終同期のあとにコンテナが止まること（`stop_grace_period: 30s` 以内）をログで確認する
+- [x] 7.3 `deploy/compose.local.yaml`（`file://` のレプリカ）でコンテナを起動し、DB への書き込みから 30 秒以内にレプリカに反映されることを確認する
+- [x] 7.4 同じ構成で、ボリュームを削除してから再起動したときに自動で復元されること、DB があるときは復元されないことを確認する
+- [x] 7.5 `docker stop` で、アプリが exit 0 で終了し、Litestream の最終同期のあとにコンテナが止まること（`stop_grace_period: 30s` 以内）をログで確認する
 - [x] 7.6 `deploy/compose.yaml`（本番用、名前付きボリューム、json-file 10m x 3、`stop_grace_period: 30s`）と `deploy/.env.example` を作り、`docker compose -f deploy/compose.yaml config` が通ることを確認する
 - [x] 7.7 `docs/restore.md` に、自動復元の仕組みと、手動での復元（任意時点を含む）の手順を書き、その手順どおりに別のディレクトリへ復元した DB が開けることを確認する
 - [x] 7.8 `docker history` とイメージ内のファイルを調べ、秘密値が含まれていないことを確認する

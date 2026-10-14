@@ -1,9 +1,5 @@
 # ローカル開発用（MISE_ENV=dev mise exec -- npm run dev）
 
-[settings]
-# .sops.yaml の unencrypted_comment_regex を使うため、sops コマンドで復号する
-sops.rops = false
-
 [env]
 _.file = { path = ".env.dev.sops.yaml", redact = true }
 DATABASE_PATH = "./data/bot.db"
