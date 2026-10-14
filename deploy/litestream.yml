@@ -13,7 +13,7 @@ dbs:
     replica:
       # 本番: s3://<bucket>/<path>（Cloudflare R2）、ローカル検証: file:///replica
       url: ${LITESTREAM_REPLICA_URL}
-      # 変更があった区間だけアップロードする。spec の「30 秒以内に複製」を満たしつつ R2 の無料枠に収める
+      # spec の「30 秒以内に複製」を満たしつつ R2 の無料枠に収める
       sync-interval: 10s
       # R2 では https://<account_id>.r2.cloudflarestorage.com と auto。認証情報は
       # LITESTREAM_ACCESS_KEY_ID / LITESTREAM_SECRET_ACCESS_KEY から読まれる

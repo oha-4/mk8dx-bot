@@ -18,7 +18,7 @@ export type DatabaseHandle = {
 export const openDatabase = (path: string): DatabaseHandle => {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true })
     const sqlite = new Database(path)
-    // Litestream は WAL を前提にする。手動の checkpoint はしない
+    // Litestream は WAL を前提にする
     sqlite.pragma('journal_mode = WAL')
     sqlite.pragma('busy_timeout = 5000')
     sqlite.pragma('synchronous = NORMAL')

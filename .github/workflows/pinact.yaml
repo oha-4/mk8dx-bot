@@ -29,10 +29,10 @@ jobs:
         with:
           persist-credentials: false
 
-      # mise.toml の pinact を入れる。pinact-action は PATH に pinact があればそれを使う
+      # pinact と reviewdog を mise.toml のバージョンで使う
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          install_args: pinact
+          install_args: pinact aqua:reviewdog/reviewdog
 
       - uses: suzuki-shunsuke/pinact-action@2a42f29b3397967439ed46e7650f3045f49699f9 # v3.0.1
         with:

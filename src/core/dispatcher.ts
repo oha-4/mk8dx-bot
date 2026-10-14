@@ -99,7 +99,7 @@ export const createDispatcher = ({ registry, reporter, logger }: Dependencies): 
             return
         }
 
-        // コマンドとして処理しなかったメッセージだけをリスナーに渡す。リスナーの失敗は利用者に返さない
+        // コマンドとして処理しなかったメッセージだけをリスナーに渡す
         await Promise.all(
             registry.listeners.map(async (listener) => {
                 try {
