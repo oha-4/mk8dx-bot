@@ -1,7 +1,7 @@
 *
 !package.json
-!pnpm-lock.yaml
-!pnpm-workspace.yaml
+!package-lock.json
+!.npmrc
 !tsconfig.json
 !tsdown.config.ts
 !src/

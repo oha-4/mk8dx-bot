@@ -2,11 +2,11 @@
 
 ## 1. プロジェクトの土台
 
-- [x] 1.1 `mise.toml`（node 26、pnpm）と `package.json`（`"type": "module"`、`packageManager`、`engines`）を作り、`mise install && pnpm install` が成功することを確認する
-- [x] 1.2 `tsconfig.json`（strict、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、NodeNext）を作り、空の `src/main.ts` で `pnpm typecheck` が通ることを確認する
-- [x] 1.3 oxlint・oxfmt を exact バージョンで追加して設定ファイルを置き、`pnpm lint` と `pnpm format:check` が通ることを確認する
-- [x] 1.4 Vitest を追加し、サンプルテスト 1 件で `pnpm test` が通ることを確認する（サンプルは 2 章で置き換える）
-- [x] 1.5 tsdown を追加して `pnpm build` で `dist/main.js` が出力されること、tsx で `pnpm dev` が起動することを確認する
+- [x] 1.1 `mise.toml`（node 26）、`.npmrc`（`ignore-scripts`、`min-release-age`）、`package.json`（`"type": "module"`、`engines`）を作り、`mise install && npm install` が成功することを確認する
+- [x] 1.2 `tsconfig.json`（strict、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、NodeNext）を作り、空の `src/main.ts` で `npm run typecheck` が通ることを確認する
+- [x] 1.3 oxlint・oxfmt を exact バージョンで追加して設定ファイルを置き、`npm run lint` と `npm run format:check` が通ることを確認する
+- [x] 1.4 Vitest を追加し、サンプルテスト 1 件で `npm test` が通ることを確認する（サンプルは 2 章で置き換える）
+- [x] 1.5 tsdown を追加して `npm run build` で `dist/main.js` が出力されること、tsx で `npm run dev` が起動することを確認する
 - [x] 1.6 `.gitignore`（`dist/`、`node_modules/`、`*.db*`、`.env`）を整え、`git status` に生成物が出ないことを確認する
 
 ## 2. 設定とロガー
@@ -23,7 +23,7 @@
 - [x] 3.4 `src/core/listener.ts`（`defineMessageListener`）と `src/core/registry.ts` を実装し、features からのスラッシュ / プレフィックスコマンドとリスナーの収集、名前とエイリアス（大文字と小文字を区別）による検索、名前・エイリアス・スラッシュコマンド名が重複したときのエラーをテストで確認する
 - [x] 3.5 `src/core/errors.ts`（`UserFacingError`）と `src/core/dispatcher.ts` を実装し、次をテストで確認する: スラッシュの正常系・未知のコマンド、プレフィックスの正常系・一致しないときは無応答、bot と webhook の投稿の無視、コマンドとして処理したメッセージがリスナーに渡らないこと、通常メッセージがリスナーに渡ること、`UserFacingError` と想定外例外への入口ごとの応答（スラッシュでは未応答 / deferred / replied の各状態で正しい API が呼ばれること）
 - [x] 3.6 `src/features/ping/` を、規約の見本として `commands/`・`usecases/`・`views/` の構成で作り（`/ping` と `%ping`、エイリアス `p`）、`src/features/index.ts` に登録する。usecase の単体テスト（discord.js なし）と、両方の入口での応答内容のテストを通す
-- [x] 3.7 oxlint に、`src/features/*/usecases/**` から `discord.js` の import を禁止するルールを追加し、違反するファイルを一時的に置いたときに `pnpm lint` が失敗し、外すと通ることを確認する
+- [x] 3.7 oxlint に、`src/features/*/usecases/**` から `discord.js` の import を禁止するルールを追加し、違反するファイルを一時的に置いたときに `npm run lint` が失敗し、外すと通ることを確認する
 
 ## 4. エラー通知
 
@@ -34,17 +34,17 @@
 
 ## 5. DB とマイグレーション
 
-- [x] 5.1 drizzle-orm・drizzle-kit・better-sqlite3 を追加し、`pnpm install` 後に better-sqlite3 が読み込めることを確認する（13 系はビルド済みバイナリを同梱しているため、ビルドスクリプトの許可は不要）
+- [x] 5.1 drizzle-orm・drizzle-kit・better-sqlite3 を追加し、`npm install` 後に better-sqlite3 が読み込めることを確認する（13 系はビルド済みバイナリを同梱しているため、ビルドスクリプトの許可は不要）
 - [x] 5.2 `src/db/client.ts`（WAL、`busy_timeout`、`synchronous=NORMAL`、`foreign_keys`）を実装し、一時ファイルで開いたときの PRAGMA 値をテストで確認する
-- [x] 5.3 `drizzle.config.ts`、`src/db/schema.ts`（features の re-export）、`pnpm db:generate` を整え、スキーマが空の状態で generate がエラーにならないことを確認する
+- [x] 5.3 `drizzle.config.ts`、`src/db/schema.ts`（features の re-export）、`npm run db:generate` を整え、スキーマが空の状態で generate がエラーにならないことを確認する
 - [x] 5.4 `src/db/migrate.ts` を実装し、テスト用マイグレーションを使って、空の DB への適用・再起動時に再適用されないこと・失敗時に DB が適用前の状態に保たれることをテストで確認する
 
 ## 6. 起動・停止の組み立て
 
 - [x] 6.1 `src/core/shutdown.ts` を実装し、SIGTERM / SIGINT で受け付けの停止 → DB と client のクローズ → exit 0、10 秒を超えたら強制終了することをテストで確認する
-- [x] 6.2 `src/main.ts` で、設定 → DB を開く → migrate → client（intents は `Guilds`・`GuildMessages`・`MessageContent`）→ ready 後にコマンドを一括登録（`DEV_GUILD_ID` の有無で登録先を切り替え）→ login の順に組み立て、`pnpm typecheck` と全テストが通ることを確認する
-- [ ] 6.3 beta 用の Discord アプリケーション（Message Content intent を有効化）と開発用ギルドで `pnpm dev` を起動し、`/ping`・`%ping`・`％p` の応答、`%unknown` に無応答なこと、想定外エラーのログチャンネル通知、コマンド削除後の再起動で登録から消えることを手動で確認する
-- [ ] 6.4 README に、ローカル開発の手順（mise、`.env`、`pnpm dev`、開発用ギルドへの登録）と、feature の追加方法（`commands/`・`listeners/`・`usecases/`・`views/`・`repository.ts` の役割、依存の向き、usecase を省略してよい条件、`features/index.ts` への登録）を書き、その手順どおりに起動できることを確認する
+- [x] 6.2 `src/main.ts` で、設定 → DB を開く → migrate → client（intents は `Guilds`・`GuildMessages`・`MessageContent`）→ ready 後にコマンドを一括登録（`DEV_GUILD_ID` の有無で登録先を切り替え）→ login の順に組み立て、`npm run typecheck` と全テストが通ることを確認する
+- [ ] 6.3 beta 用の Discord アプリケーション（Message Content intent を有効化）と開発用ギルドで `npm run dev` を起動し、`/ping`・`%ping`・`％p` の応答、`%unknown` に無応答なこと、想定外エラーのログチャンネル通知、コマンド削除後の再起動で登録から消えることを手動で確認する
+- [ ] 6.4 README に、ローカル開発の手順（mise、`.env`、`npm run dev`、開発用ギルドへの登録）と、feature の追加方法（`commands/`・`listeners/`・`usecases/`・`views/`・`repository.ts` の役割、依存の向き、usecase を省略してよい条件、`features/index.ts` への登録）を書き、その手順どおりに起動できることを確認する
 
 ## 7. コンテナと Litestream
 

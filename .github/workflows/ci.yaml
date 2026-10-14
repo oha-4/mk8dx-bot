@@ -22,14 +22,14 @@ jobs:
         with:
           persist-credentials: false
 
-      # mise.toml の node と pnpm を入れる
+      # mise.toml の node を入れる
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
 
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm format:check
-      - run: pnpm typecheck
-      - run: pnpm test
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
 
   image:
     name: Build and push image

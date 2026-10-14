@@ -136,7 +136,7 @@ export const pingPrefix = definePrefixCommand({
 
 ### D4. コマンド登録は起動時の一括上書き
 
-`ready` の後に REST の bulk overwrite（PUT）で、`DEV_GUILD_ID` があればギルドに、なければグローバルに登録する。PUT は全体置換なので、コードから消えたコマンドも消える。代替案は手動で実行する `pnpm commands:deploy` スクリプト。デプロイの手順が増え、登録し忘れのリスクがあるため採用しない。起動のたびに PUT しても、定義が同じなら Discord 側の変更はない。
+`ready` の後に REST の bulk overwrite（PUT）で、`DEV_GUILD_ID` があればギルドに、なければグローバルに登録する。PUT は全体置換なので、コードから消えたコマンドも消える。代替案は手動で実行する `npm run commands:deploy` スクリプト。デプロイの手順が増え、登録し忘れのリスクがあるため採用しない。起動のたびに PUT しても、定義が同じなら Discord 側の変更はない。
 
 ### D5. エラーの振り分けは dispatcher に集約する
 
@@ -171,7 +171,7 @@ entrypoint.sh
 - `sync-interval: 10s`（spec の 30 秒以内を満たす）。Litestream は変更があった区間しかアップロードしない。10 秒ごとに必ず書き込みがある最悪の場合でも、同期（約 26 万回）+ 0.5 系のコンパクション（約 9.6 万回）+ スナップショットや一覧取得（数千回）で、R2 の Class A は月約 36 万回となり、無料枠の 100 万回に収まる。この見積もりは仕組みから計算したもので、実測ではないため、稼働後に R2 のメトリクスで確認する。
 - スナップショットは 24 時間ごと、保持は 7 日（任意時点への復元の範囲）。
 - Litestream の arm64 バイナリは、公式イメージから multi-stage でコピーし、バージョンを固定する。
-- ローカル開発では Litestream を使わず、`pnpm dev` で直接起動する。復元の確認は `deploy/compose.local.yaml`（`file://` のレプリカ）で行う。
+- ローカル開発では Litestream を使わず、`npm run dev` で直接起動する。復元の確認は `deploy/compose.local.yaml`（`file://` のレプリカ）で行う。
 
 代替案は Litestream を sidecar コンテナにする方法。「復元が終わってからアプリが起動する」順序と、停止時の最終同期を、compose の依存関係だけで保証するのが難しいため採用しない。
 
@@ -179,7 +179,8 @@ entrypoint.sh
 
 | 用途 | 採用 | 備考 |
 |---|---|---|
-| バージョン管理 | mise（`mise.toml` で node 26 と pnpm を固定） | `packageManager` フィールドも合わせる |
+| バージョン管理 | mise（`mise.toml` で node 26 を固定） | CI も `jdx/mise-action` で同じ node を入れる |
+| パッケージマネージャ | npm（Node 同梱） | 設定は `.npmrc` |
 | 開発実行 | tsx（watch） | |
 | 型チェック | `tsc --noEmit`（strict、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`） | |
 | ビルド | tsdown | Rolldown ベースで Oxc と同系統。依存は external のままにし、node_modules を同梱する |
@@ -188,11 +189,15 @@ entrypoint.sh
 
 代替案は esbuild（JS 版の実績あり）。設定がやや多く、tsdown のほうが TS ライブラリやアプリ向けの既定値がそろっているため採用しない。問題が出れば esbuild に戻せる。
 
-pnpm は依存のビルドスクリプトを既定で無効にしており、許可したものを `pnpm-workspace.yaml` の `allowBuilds` に記録する（esbuild のみ許可）。better-sqlite3 13 は N-API のビルド済みバイナリ（linux-arm64 を含む）を同梱していてインストールスクリプトがないため、許可は不要。
+パッケージマネージャは npm にする。単一パッケージのアプリなので pnpm の workspace やディスク節約の利点が効かず、Node 同梱の npm なら Docker と CI で別途入れる手間がない。代替案の pnpm は、依存のインストールスクリプトを既定で実行しない点が利点だったが、同じ守りを `.npmrc` で用意する。
+
+- `ignore-scripts=true`: 依存のインストールスクリプトを実行しない。esbuild はプラットフォーム別の optional dependency でバイナリを配布し、better-sqlite3 13 は N-API のビルド済みバイナリ（linux-arm64 を含む）を同梱しているため、スクリプトなしで動く
+- `min-release-age=7`: 公開から 7 日経ったバージョンだけを解決する（GitHub Actions の pinact と同じ基準）。公開直後のバージョンに混入した悪意あるコードを避けるため。直接の依存の範囲指定は、7 日経った版が解決できる下限にする
+- Dockerfile にも `.npmrc` をコピーし、`npm ci` で lockfile どおりにインストールする
 
 ### D9. コンテナと CI
 
-- Dockerfile は multi-stage（build: `node:26-slim` で `pnpm install --frozen-lockfile` → tsdown → `pnpm prune --prod`。runtime: `node:26-slim` + Litestream バイナリ + `dist/` + `node_modules`）。非 root ユーザーで実行し、`/data` を VOLUME にする。
+- Dockerfile は multi-stage（deps: `npm ci --omit=dev`、build: `npm ci` → tsdown。runtime: `node:26-slim` + Litestream バイナリ + `dist/` + `node_modules`）。非 root ユーザーで実行し、`/data` を VOLUME にする。
 - GitHub Actions は 2 ジョブ。`check`（oxlint、`oxfmt --check`、tsc、vitest）は PR と main で実行する。`image` は main のみで、`needs: check`。`ubuntu-24.04-arm` 上で linux/arm64 をビルドする。Action は pinact で SHA 固定する。
 - **イメージ名は Python 版と同じ `ghcr.io/oha-4/mk8dx-bot`、タグは `edge` と `<sha>`**。タグは `docker/metadata-action` で付ける（`type=edge,branch=main` と `type=sha`、`flavor: latest=false`）。main への push ごとのビルドに `edge` を付けるのは metadata-action が標準で用意している慣習で、`beta`（プレリリースの段階）や `nightly`（定期ビルド）とは意味が異なる。metadata-action の `labels` 出力は渡さない。含まれる `org.opencontainers.image.source` が GHCR のパッケージとリポジトリの紐づけに使われ、Python 版に紐づいた既存パッケージへの影響を確認していないため。同じイメージ名の中でもタグは独立しているので、Python 版が参照する `latest` には影響しない。パッケージは Python 版のリポジトリに紐づいているため、Package settings の Manage Actions access で `oha-4/mk8dx-bot` に Write 権限を付与する。CI のタグ指定には `latest` を含めない（spec: deployment の旧 bot との分離）。
 - 代替案は別のイメージ名（`mk8dx-bot-next` など）。権限の設定は不要になるが、切り替え時にイメージ名の変更が必要になるため、採用しない。

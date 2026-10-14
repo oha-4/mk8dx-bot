@@ -3,19 +3,18 @@
 FROM litestream/litestream:0.5.17@sha256:4b02b9859a6b6b4087d8b8944e15f7e984bd7957cba322bbeee38b0e27b9656a AS litestream
 
 FROM node:26.11.1-slim@sha256:193fe51b64e77981119c98c2002c9e32a70e2f006fb4d25068ce0558998917f0 AS base
-# Node 25 以降は corepack が同梱されないため npm で入れる。バージョンは package.json の packageManager と揃える
-RUN npm install -g pnpm@12.11.2 && npm cache clean --force
 WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# .npmrc の ignore-scripts と min-release-age をイメージのビルドでも効かせる
+COPY package.json package-lock.json .npmrc ./
 
 FROM base AS deps
-RUN pnpm install --frozen-lockfile --prod
+RUN npm ci --omit=dev && npm cache clean --force
 
 FROM base AS build
-RUN pnpm install --frozen-lockfile
+RUN npm ci
 COPY tsconfig.json tsdown.config.ts ./
 COPY src ./src
-RUN pnpm build
+RUN npm run build
 
 FROM node:26.11.1-slim@sha256:193fe51b64e77981119c98c2002c9e32a70e2f006fb4d25068ce0558998917f0 AS runtime
 ENV NODE_ENV=production \

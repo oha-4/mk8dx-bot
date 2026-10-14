@@ -18,13 +18,13 @@
   "dependencies": {
     "better-sqlite3": "^13.0.3",
     "discord.js": "^14.27.0",
-    "drizzle-orm": "^0.45.4",
+    "drizzle-orm": "^0.45.3",
     "pino": "^10.4.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.4",
     "drizzle-kit": "^0.31.11",
     "oxfmt": "0.72.0",
     "oxlint": "1.87.0",
@@ -35,6 +35,5 @@
   },
   "engines": {
     "node": ">=26"
-  },
-  "packageManager": "pnpm@12.11.2"
+  }
 }

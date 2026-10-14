@@ -6,11 +6,11 @@ MK8DX コミュニティ向けの Discord bot（TypeScript 版）。
 
 ### 準備
 
-1. [mise](https://mise.jdx.dev/) で Node と pnpm を入れ、依存をインストールする
+1. [mise](https://mise.jdx.dev/) で Node を入れ、npm で依存をインストールする
 
     ```sh
     mise install
-    pnpm install
+    npm install
     ```
 
 2. Discord Developer Portal で開発用のアプリケーションを用意する
@@ -21,14 +21,16 @@ MK8DX コミュニティ向けの Discord bot（TypeScript 版）。
 ### 起動とチェック
 
 ```sh
-pnpm dev            # tsx watch で起動（.env を読む）
-pnpm typecheck      # tsc --noEmit
-pnpm lint           # oxlint
-pnpm format         # oxfmt で整形（CI は format:check）
-pnpm test           # vitest（*.test-d.ts の型テストも含む）
-pnpm build          # tsdown で dist/main.js を出力
-pnpm db:generate    # スキーマの変更から drizzle/ にマイグレーションを生成
+npm run dev            # tsx watch で起動（.env を読む）
+npm run typecheck      # tsc --noEmit
+npm run lint           # oxlint
+npm run format         # oxfmt で整形（CI は format:check）
+npm test               # vitest（*.test-d.ts の型テストも含む）
+npm run build          # tsdown で dist/main.js を出力
+npm run db:generate    # スキーマの変更から drizzle/ にマイグレーションを生成
 ```
+
+`.npmrc` で、依存のインストールスクリプトを実行しない設定（`ignore-scripts`）と、公開から 7 日経ったバージョンだけを使う設定（`min-release-age`）を入れている。新しく公開されたばかりのバージョンを入れようとすると解決に失敗するので、その場合は 7 日経った版を指定する。
 
 マイグレーションは起動時に、Discord に接続する前に自動で適用される。
 
@@ -98,4 +100,4 @@ export const resultListener = defineMessageListener({ name: 'result', handle: as
 
 1. `src/features/<name>/index.ts` で `Feature`（`slashCommands` / `prefixCommands` / `listeners`）を export する
 2. `src/features/index.ts` の `features` に追加する
-3. テーブルがあれば `src/db/schema.ts` で `schema.ts` を re-export し、`pnpm db:generate` でマイグレーションを生成してコミットする
+3. テーブルがあれば `src/db/schema.ts` で `schema.ts` を re-export し、`npm run db:generate` でマイグレーションを生成してコミットする
