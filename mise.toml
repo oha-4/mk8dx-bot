@@ -1,0 +1,6 @@
+# .node-version を CI と共有するため、mise にも .node-version を読ませる
+[settings]
+idiomatic_version_file_enable_tools = ["node"]
+
+[tools]
+pinact = "5.0.0"

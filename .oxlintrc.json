@@ -1,0 +1,39 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "vitest/require-mock-type-parameters": "off"
+  },
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": ["dist/", "drizzle/"],
+  "overrides": [
+    {
+      "files": ["src/features/*/usecases/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "discord.js",
+                "message": "usecases は discord.js に依存させない（design D1）。Discord の値は commands / listeners で変換して渡す"
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["discord.js/*", "@discordjs/*"],
+                "message": "usecases は discord.js に依存させない（design D1）"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

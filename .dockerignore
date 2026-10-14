@@ -1,0 +1,14 @@
+*
+!package.json
+!package-lock.json
+!.npmrc
+!tsconfig.json
+!tsdown.config.ts
+!src/
+!drizzle/
+!deploy/litestream.yml
+!deploy/entrypoint.sh
+src/**/*.test.ts
+src/**/*.test-d.ts
+src/**/__fixtures__/
+src/testing/

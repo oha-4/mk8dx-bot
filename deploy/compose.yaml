@@ -1,0 +1,29 @@
+# 本番（OCI A1 の Dockhand スタック mk8dx-bot）用。値は Dockhand の .env で設定する（deploy/.env.example を参照）
+services:
+  bot:
+    image: ghcr.io/oha-4/mk8dx-bot:edge
+    restart: unless-stopped
+    environment:
+      DISCORD_TOKEN: ${DISCORD_TOKEN:?}
+      DISCORD_APPLICATION_ID: ${DISCORD_APPLICATION_ID:?}
+      ERROR_LOG_CHANNEL_ID: ${ERROR_LOG_CHANNEL_ID:?}
+      DEV_GUILD_ID: ${DEV_GUILD_ID:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LITESTREAM_REPLICA_URL: ${LITESTREAM_REPLICA_URL:?}
+      LITESTREAM_S3_ENDPOINT: ${LITESTREAM_S3_ENDPOINT:?}
+      LITESTREAM_S3_REGION: ${LITESTREAM_S3_REGION:-auto}
+      LITESTREAM_ACCESS_KEY_ID: ${LITESTREAM_ACCESS_KEY_ID:?}
+      LITESTREAM_SECRET_ACCESS_KEY: ${LITESTREAM_SECRET_ACCESS_KEY:?}
+    volumes:
+      - data:/data
+    # bot の停止（最大 10 秒）と Litestream の最終同期のための猶予
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+volumes:
+  data:
+    name: mk8dx-bot-data

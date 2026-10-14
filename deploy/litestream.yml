@@ -1,0 +1,21 @@
+# Litestream v0.5 の設定。${VAR} は起動時に環境変数で置き換えられる
+logging:
+  level: info
+  type: json
+
+# 24 時間ごとにスナップショットを取り、7 日分を保持する（この範囲で任意の時点に戻せる）
+snapshot:
+  interval: 24h
+  retention: 168h
+
+dbs:
+  - path: ${DATABASE_PATH}
+    replica:
+      # 本番: s3://<bucket>/<path>（Cloudflare R2）、ローカル検証: file:///replica
+      url: ${LITESTREAM_REPLICA_URL}
+      # A1 が突然失われたときに失うのは最大 1 時間分にする（停止時は最終同期するため失わない）
+      sync-interval: 1h
+      # R2 では https://<account_id>.r2.cloudflarestorage.com と auto。認証情報は
+      # LITESTREAM_ACCESS_KEY_ID / LITESTREAM_SECRET_ACCESS_KEY から読まれる
+      endpoint: ${LITESTREAM_S3_ENDPOINT}
+      region: ${LITESTREAM_S3_REGION}
