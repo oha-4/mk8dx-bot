@@ -20,4 +20,9 @@ describe('ping', () => {
     test('エイリアス p を持つ', () => {
         expect(pingPrefix.aliases).toEqual(['p'])
     })
+
+    test('管理用のコマンドとして定義する', () => {
+        expect(pingSlash.scope).toBe('admin')
+        expect(pingPrefix.scope).toBe('admin')
+    })
 })

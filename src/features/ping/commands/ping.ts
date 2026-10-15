@@ -9,6 +9,7 @@ const run = (client: Client) => renderPing(measureLatency({ gatewayPing: () => c
 export const pingSlash = defineSlashCommand({
     name: 'ping',
     description: 'bot の応答速度を確認します',
+    scope: 'admin',
     options: {},
     execute: (interaction) => interaction.reply({ ...run(interaction.client), flags: MessageFlags.Ephemeral }),
 })
@@ -16,6 +17,7 @@ export const pingSlash = defineSlashCommand({
 export const pingPrefix = definePrefixCommand({
     name: 'ping',
     aliases: ['p'],
+    scope: 'admin',
     description: 'bot の応答速度を確認します',
     args: [],
     execute: (message) => message.channel.send(run(message.client)),

@@ -1,4 +1,5 @@
 import type { RESTPostAPIChatInputApplicationCommandsJSONBody } from 'discord.js'
+import type { CommandScope } from './command-scope.ts'
 import type { MessageListener } from './listener.ts'
 import type { PrefixCommand } from './prefix-command.ts'
 import type { SlashCommand } from './slash-command.ts'
@@ -15,7 +16,8 @@ export type Registry = {
     /** 名前またはエイリアスで探す。大文字と小文字を区別する */
     findPrefixCommand: (nameOrAlias: string) => PrefixCommand | undefined
     readonly listeners: readonly MessageListener[]
-    slashCommandsJSON: () => RESTPostAPIChatInputApplicationCommandsJSONBody[]
+    /** scope を指定するとその範囲のコマンドだけを返す */
+    slashCommandsJSON: (scope?: CommandScope) => RESTPostAPIChatInputApplicationCommandsJSONBody[]
 }
 
 export const createRegistry = (features: readonly Feature[]): Registry => {
@@ -46,6 +48,9 @@ export const createRegistry = (features: readonly Feature[]): Registry => {
         findSlashCommand: (name) => slash.get(name),
         findPrefixCommand: (nameOrAlias) => prefix.get(nameOrAlias),
         listeners,
-        slashCommandsJSON: () => [...slash.values()].map((command) => command.toJSON()),
+        slashCommandsJSON: (scope) =>
+            [...slash.values()]
+                .filter((command) => scope === undefined || command.scope === scope)
+                .map((command) => command.toJSON()),
     }
 }

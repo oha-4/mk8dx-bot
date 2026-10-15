@@ -13,6 +13,7 @@ services:
       DISCORD_APPLICATION_ID: ${DISCORD_APPLICATION_ID:?}
       ERROR_LOG_CHANNEL_ID: ${ERROR_LOG_CHANNEL_ID:?}
       DEV_GUILD_ID: ${DEV_GUILD_ID:-}
+      ADMIN_GUILD_ID: ${ADMIN_GUILD_ID:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       DATABASE_PATH: /data/bot.db
       LITESTREAM_REPLICA_URL: file:///replica/bot

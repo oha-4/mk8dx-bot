@@ -8,6 +8,7 @@ const configSchema = z.object({
     DISCORD_APPLICATION_ID: snowflake,
     ERROR_LOG_CHANNEL_ID: snowflake,
     DEV_GUILD_ID: z.preprocess(blankToUndefined, snowflake.optional()),
+    ADMIN_GUILD_ID: z.preprocess(blankToUndefined, snowflake.optional()),
     DATABASE_PATH: z.string().min(1, '空でない文字列'),
     LOG_LEVEL: z.preprocess(
         blankToUndefined,
@@ -20,6 +21,7 @@ export type Config = {
     applicationId: string
     errorLogChannelId: string
     devGuildId: string | undefined
+    adminGuildId: string | undefined
     databasePath: string
     logLevel: z.infer<typeof configSchema>['LOG_LEVEL']
 }
@@ -51,6 +53,7 @@ export const parseConfig = (env: Record<string, string | undefined>): ConfigResu
             applicationId: data.DISCORD_APPLICATION_ID,
             errorLogChannelId: data.ERROR_LOG_CHANNEL_ID,
             devGuildId: data.DEV_GUILD_ID,
+            adminGuildId: data.ADMIN_GUILD_ID,
             databasePath: data.DATABASE_PATH,
             logLevel: data.LOG_LEVEL,
         },

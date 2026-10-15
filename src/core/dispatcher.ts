@@ -1,4 +1,5 @@
 import { MessageFlags, type ChatInputCommandInteraction, type Interaction, type Message } from 'discord.js'
+import type { CommandScope } from './command-scope.ts'
 import type { ErrorReporter } from './error-reporter.ts'
 import { UserFacingError } from './errors.ts'
 import type { Logger } from './logger.ts'
@@ -19,6 +20,8 @@ export type Dispatcher = {
 
 type Dependencies = {
     registry: Registry
+    /** 管理用のコマンドを実行してよいギルド。未設定ならどこでも実行しない */
+    adminGuildId: string | undefined
     reporter: ErrorReporter
     logger: Logger
 }
@@ -38,7 +41,14 @@ const respondEphemeral = async (interaction: ChatInputCommandInteraction, conten
     }
 }
 
-export const createDispatcher = ({ registry, reporter, logger }: Dependencies): Dispatcher => {
+export const createDispatcher = ({ registry, adminGuildId, reporter, logger }: Dependencies): Dispatcher => {
+    // 管理用ギルド以外での管理用コマンドは、未知のコマンドと同じに扱う
+    const usableIn = <C extends { scope: CommandScope }>(command: C | undefined, guildId: string | null) =>
+        command !== undefined &&
+        (command.scope === 'global' || (adminGuildId !== undefined && guildId === adminGuildId))
+            ? command
+            : undefined
+
     let accepting = true
     const inFlight = new Set<Promise<void>>()
 
@@ -58,7 +68,7 @@ export const createDispatcher = ({ registry, reporter, logger }: Dependencies): 
     }
 
     const runSlash = async (interaction: ChatInputCommandInteraction) => {
-        const command = registry.findSlashCommand(interaction.commandName)
+        const command = usableIn(registry.findSlashCommand(interaction.commandName), interaction.guildId)
         if (command === undefined) {
             await safely(() => respondEphemeral(interaction, UNKNOWN_COMMAND_MESSAGE), '未知のコマンドへの応答')
             return
@@ -83,7 +93,10 @@ export const createDispatcher = ({ registry, reporter, logger }: Dependencies): 
 
     const runMessage = async (message: Message<true>) => {
         const invocation = parsePrefixInvocation(message.content)
-        const command = invocation === undefined ? undefined : registry.findPrefixCommand(invocation.name)
+        const command = usableIn(
+            invocation === undefined ? undefined : registry.findPrefixCommand(invocation.name),
+            message.guildId,
+        )
         if (command !== undefined && invocation !== undefined) {
             try {
                 await command.run(message, invocation)

@@ -24,6 +24,20 @@ describe('createRegistry', () => {
         expect(registry.slashCommandsJSON().map((json) => json.name)).toEqual(['ping'])
     })
 
+    test('scope ごとにスラッシュコマンドの JSON を返す', () => {
+        const admin = defineSlashCommand({
+            name: 'admin',
+            description: 'x',
+            scope: 'admin',
+            options: {},
+            execute: async () => {},
+        })
+        const registry = createRegistry([{ name: 'a', slashCommands: [slash('ping'), admin] }])
+        expect(registry.slashCommandsJSON('global').map((json) => json.name)).toEqual(['ping'])
+        expect(registry.slashCommandsJSON('admin').map((json) => json.name)).toEqual(['admin'])
+        expect(registry.slashCommandsJSON().map((json) => json.name)).toEqual(['ping', 'admin'])
+    })
+
     test('プレフィックスの名前とエイリアスは大文字と小文字を区別する', () => {
         const can = prefix('can', ['c', 'C'])
         const registry = createRegistry([{ name: 'a', prefixCommands: [can] }])

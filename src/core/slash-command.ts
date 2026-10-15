@@ -4,6 +4,7 @@ import {
     type RESTPostAPIChatInputApplicationCommandsJSONBody,
     type User,
 } from 'discord.js'
+import type { CommandScope } from './command-scope.ts'
 
 type Choice<V extends string | number> = { readonly name: string; readonly value: V }
 
@@ -39,12 +40,14 @@ export type SlashOptionsOf<O extends Record<string, SlashOptionDefinition>> = {
 export type SlashCommandDefinition<O extends Record<string, SlashOptionDefinition>> = {
     name: string
     description: string
+    scope?: CommandScope
     options: O
     execute: (interaction: ChatInputCommandInteraction, options: SlashOptionsOf<O>) => Promise<unknown>
 }
 
 export type SlashCommand = {
     readonly name: string
+    readonly scope: CommandScope
     toJSON: () => RESTPostAPIChatInputApplicationCommandsJSONBody
     run: (interaction: ChatInputCommandInteraction) => Promise<unknown>
 }
@@ -96,6 +99,7 @@ export const defineSlashCommand = <const O extends Record<string, SlashOptionDef
 
     return {
         name: definition.name,
+        scope: definition.scope ?? 'global',
         toJSON: () => ({
             name: definition.name,
             description: definition.description,
