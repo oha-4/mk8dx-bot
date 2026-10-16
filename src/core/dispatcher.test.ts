@@ -1,6 +1,13 @@
 import { MessageFlags } from 'discord.js'
 import { describe, expect, test, vi } from 'vitest'
-import { CHANNEL_ID, GUILD_ID, fakeMessage, fakeReporter, fakeSlashInteraction } from '../testing/discord.ts'
+import {
+    CHANNEL_ID,
+    GUILD_ID,
+    OTHER_GUILD_ID,
+    fakeMessage,
+    fakeReporter,
+    fakeSlashInteraction,
+} from '../testing/discord.ts'
 import { GENERIC_ERROR_MESSAGE, UNKNOWN_COMMAND_MESSAGE, createDispatcher } from './dispatcher.ts'
 import { UserFacingError } from './errors.ts'
 import { defineMessageListener } from './listener.ts'
@@ -15,17 +22,30 @@ const setup = (behavior: Behavior = async () => {}) => {
     const slashExecute = vi.fn(async (interaction: { deferReply: () => Promise<unknown> }) => behavior(interaction))
     const prefixExecute = vi.fn(async () => behavior({}))
     const listenerHandle = vi.fn(async () => {})
+    const adminExecute = vi.fn(async () => {})
     const registry = createRegistry([
         {
             name: 'test',
-            slashCommands: [defineSlashCommand({ name: 'ping', description: 'x', options: {}, execute: slashExecute })],
-            prefixCommands: [definePrefixCommand({ name: 'ping', aliases: ['p'], args: [], execute: prefixExecute })],
+            slashCommands: [
+                defineSlashCommand({ name: 'ping', description: 'x', options: {}, execute: slashExecute }),
+                defineSlashCommand({
+                    name: 'admin',
+                    description: 'x',
+                    scope: 'admin',
+                    options: {},
+                    execute: adminExecute,
+                }),
+            ],
+            prefixCommands: [
+                definePrefixCommand({ name: 'ping', aliases: ['p'], args: [], execute: prefixExecute }),
+                definePrefixCommand({ name: 'admin', scope: 'admin', args: [], execute: adminExecute }),
+            ],
             listeners: [defineMessageListener({ name: 'spy', handle: listenerHandle })],
         },
     ])
     const reporter = fakeReporter()
-    const dispatcher = createDispatcher({ registry, reporter, logger: createLogger('silent') })
-    return { dispatcher, reporter, slashExecute, prefixExecute, listenerHandle }
+    const dispatcher = createDispatcher({ registry, adminGuildId: GUILD_ID, reporter, logger: createLogger('silent') })
+    return { dispatcher, reporter, slashExecute, prefixExecute, listenerHandle, adminExecute }
 }
 
 const ephemeral = (content: string) => ({ content, flags: MessageFlags.Ephemeral })
@@ -179,6 +199,38 @@ describe('プレフィックスコマンドとリスナー', () => {
         listenerHandle.mockRejectedValueOnce(new UserFacingError('x'))
         await dispatcher.handleMessage(fakeMessage('123456'))
         expect(reporter.report).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe('管理用コマンドの利用範囲', () => {
+    test('管理用ギルドでは管理用コマンドを実行する', async () => {
+        const { dispatcher, adminExecute } = setup()
+        await dispatcher.handleMessage(fakeMessage('%admin'))
+        await dispatcher.handleInteraction(fakeSlashInteraction('admin'))
+        expect(adminExecute).toHaveBeenCalledTimes(2)
+    })
+
+    test('ほかのギルドのプレフィックスコマンドは無応答で、リスナーに渡す', async () => {
+        const { dispatcher, adminExecute, listenerHandle } = setup()
+        const message = fakeMessage('%admin', {}, { guildId: OTHER_GUILD_ID })
+        await dispatcher.handleMessage(message)
+        expect(adminExecute).not.toHaveBeenCalled()
+        expect(message.reply).not.toHaveBeenCalled()
+        expect(listenerHandle).toHaveBeenCalledWith(message)
+    })
+
+    test('ほかのギルドのスラッシュコマンドには利用できない旨を返す', async () => {
+        const { dispatcher, adminExecute } = setup()
+        const interaction = fakeSlashInteraction('admin', { guildId: OTHER_GUILD_ID })
+        await dispatcher.handleInteraction(interaction)
+        expect(adminExecute).not.toHaveBeenCalled()
+        expect(interaction.reply).toHaveBeenCalledWith(ephemeral(UNKNOWN_COMMAND_MESSAGE))
+    })
+
+    test('一般向けのコマンドはどのギルドでも実行する', async () => {
+        const { dispatcher, prefixExecute } = setup()
+        await dispatcher.handleMessage(fakeMessage('%ping', {}, { guildId: OTHER_GUILD_ID }))
+        expect(prefixExecute).toHaveBeenCalledOnce()
     })
 })
 

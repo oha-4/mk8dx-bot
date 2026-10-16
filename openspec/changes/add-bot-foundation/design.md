@@ -127,7 +127,8 @@ export const pingPrefix = definePrefixCommand({
 | `DISCORD_TOKEN` | ○ | bot トークン |
 | `DISCORD_APPLICATION_ID` | ○ | コマンド登録 |
 | `ERROR_LOG_CHANNEL_ID` | ○ | 想定外エラーの通知先 |
-| `DEV_GUILD_ID` | - | 指定時はギルドに登録 |
+| `DEV_GUILD_ID` | - | 指定時はすべてのコマンドをこのギルドに登録 |
+| `ADMIN_GUILD_ID` | - | 管理用のコマンド（`scope: 'admin'`）を登録し、実行を許すギルド |
 | `DATABASE_PATH` | ○（イメージ内で既定値 `/data/bot.db`） | SQLite ファイル |
 | `LOG_LEVEL` | - | 既定は `info` |
 | `LITESTREAM_REPLICA_URL` ほか R2 認証情報 | コンテナ内のみ | Litestream が読む。アプリは読まない |
@@ -136,7 +137,9 @@ export const pingPrefix = definePrefixCommand({
 
 ### D4. コマンド登録は起動時の一括上書き
 
-`ready` の後に REST の bulk overwrite（PUT）で、`DEV_GUILD_ID` があればギルドに、なければグローバルに登録する。PUT は全体置換なので、コードから消えたコマンドも消える。代替案は手動で実行する `npm run commands:deploy` スクリプト。デプロイの手順が増え、登録し忘れのリスクがあるため採用しない。起動のたびに PUT しても、定義が同じなら Discord 側の変更はない。
+`ready` の後に REST の bulk overwrite（PUT）で登録する。`DEV_GUILD_ID` があれば、すべてのコマンドをそのギルドに登録する。なければ、`scope: 'global'`（既定）のコマンドをグローバルに、`scope: 'admin'` のコマンドを `ADMIN_GUILD_ID` のギルドに登録する。`ADMIN_GUILD_ID` も未設定なら、管理用のコマンドは登録せずに警告をログに出す。このとき、以前にどこかのギルドへ登録した管理用コマンドは、登録先がわからないため残るが、dispatcher が実行を断る。PUT は登録先ごとの全体置換なので、コードから消えたコマンドや、`scope` を変えたコマンドは前の登録先から消える。
+
+`scope` は `defineSlashCommand` と `definePrefixCommand` の両方に付けられる。dispatcher は、管理用のコマンドを管理用ギルド（`DEV_GUILD_ID ?? ADMIN_GUILD_ID`）以外で受け取った場合、未知のコマンドと同じに扱う。プレフィックスコマンドは登録の仕組みがないため、実行時のこの判定だけで範囲を絞る。`/ping` のような管理用のコマンドを、bot が入っている全サーバーのコマンド一覧に出さないため。代替案は手動で実行する `npm run commands:deploy` スクリプト。デプロイの手順が増え、登録し忘れのリスクがあるため採用しない。起動のたびに PUT しても、定義が同じなら Discord 側の変更はない。
 
 ### D5. エラーの振り分けは dispatcher に集約する
 

@@ -44,14 +44,15 @@ pinact run             # GitHub Actions を SHA に固定する（mise.toml の 
 
 ## 環境変数
 
-| 変数                     | 必須 | 説明                                                                         |
-| ------------------------ | ---- | ---------------------------------------------------------------------------- |
-| `DISCORD_TOKEN`          | ○    | bot トークン                                                                 |
-| `DISCORD_APPLICATION_ID` | ○    | Discord アプリケーション ID（コマンド登録に使う）                            |
-| `ERROR_LOG_CHANNEL_ID`   | ○    | 想定外エラーの通知先チャンネル ID                                            |
-| `DEV_GUILD_ID`           | -    | 指定するとそのギルドにだけコマンドを登録する。未指定ならグローバルに登録する |
-| `DATABASE_PATH`          | ○    | SQLite ファイルのパス（コンテナでは `/data/bot.db`）                         |
-| `LOG_LEVEL`              | -    | `fatal` / `error` / `warn` / `info` / `debug` / `trace`（既定: `info`）      |
+| 変数                     | 必須 | 説明                                                                                                            |
+| ------------------------ | ---- | --------------------------------------------------------------------------------------------------------------- |
+| `DISCORD_TOKEN`          | ○    | bot トークン                                                                                                    |
+| `DISCORD_APPLICATION_ID` | ○    | Discord アプリケーション ID（コマンド登録に使う）                                                               |
+| `ERROR_LOG_CHANNEL_ID`   | ○    | 想定外エラーの通知先チャンネル ID                                                                               |
+| `DEV_GUILD_ID`           | -    | 指定するとすべてのコマンドをそのギルドにだけ登録する                                                            |
+| `ADMIN_GUILD_ID`         | -    | 管理用のコマンド（`scope: 'admin'`）を登録し、実行を許すギルド。`DEV_GUILD_ID` を指定した場合はそちらが使われる |
+| `DATABASE_PATH`          | ○    | SQLite ファイルのパス（コンテナでは `/data/bot.db`）                                                            |
+| `LOG_LEVEL`              | -    | `fatal` / `error` / `warn` / `info` / `debug` / `trace`（既定: `info`）                                         |
 
 コンテナで動かすときの Litestream 用の変数は `deploy/.env.example` を参照。
 
@@ -102,6 +103,7 @@ definePrefixCommand({ name: 'vs', usage: '%vs <tag...>', parse: (tokens) => ({ t
 export const resultListener = defineMessageListener({ name: 'result', handle: async (message) => { ... } })
 ```
 
+- `/ping` のような管理用のコマンドは `scope: 'admin'` を付ける。スラッシュコマンドは管理用ギルドにだけ登録され、どちらの入口でも管理用ギルドの外では未知のコマンドと同じ扱いになる
 - 利用者に伝えるべき失敗は `UserFacingError` を throw する。スラッシュでは本人にだけ、プレフィックスでは通知を鳴らさない返信で表示され、エラーログチャンネルには通知されない
 - それ以外の例外は、利用者に汎用メッセージを返し、エラーログチャンネルに通知される。リスナーの例外は利用者に返さない
 

@@ -24,6 +24,7 @@
 - [x] 3.5 `src/core/errors.ts`（`UserFacingError`）と `src/core/dispatcher.ts` を実装し、次をテストで確認する: スラッシュの正常系・未知のコマンド、プレフィックスの正常系・一致しないときは無応答、bot と webhook の投稿の無視、コマンドとして処理したメッセージがリスナーに渡らないこと、通常メッセージがリスナーに渡ること、`UserFacingError` と想定外例外への入口ごとの応答（スラッシュでは未応答 / deferred / replied の各状態で正しい API が呼ばれること）
 - [x] 3.6 `src/features/ping/` を、規約の見本として `commands/`・`usecases/`・`views/` の構成で作り（`/ping` と `%ping`、エイリアス `p`）、`src/features/index.ts` に登録する。usecase の単体テスト（discord.js なし）と、両方の入口での応答内容のテストを通す
 - [x] 3.7 oxlint に、`src/features/*/usecases/**` から `discord.js` の import を禁止するルールを追加し、違反するファイルを一時的に置いたときに `npm run lint` が失敗し、外すと通ることを確認する
+- [x] 3.8 `defineSlashCommand` と `definePrefixCommand` に `scope`（`'global'` 既定 / `'admin'`）を追加し、registry が登録先ごとに JSON を返すこと、dispatcher が管理用ギルド以外での管理用コマンドを未知のコマンドとして扱うこと（プレフィックスはリスナーに渡り、スラッシュは利用できない旨を返す）をテストで確認する。`ping` を `scope: 'admin'` にする
 
 ## 4. エラー通知
 
@@ -45,6 +46,7 @@
 - [x] 6.2 `src/main.ts` で、設定 → DB を開く → migrate → client（intents は `Guilds`・`GuildMessages`・`MessageContent`）→ ready 後にコマンドを一括登録（`DEV_GUILD_ID` の有無で登録先を切り替え）→ login の順に組み立て、`npm run typecheck` と全テストが通ることを確認する
 - [x] 6.3 開発用の Discord アプリケーション（Message Content intent を有効化）の値を `.env.dev.sops.yaml` に入れ、開発用ギルドで `MISE_ENV=dev mise exec -- npm run dev` を起動し、`/ping`・`%ping`・`％p` の応答、`%unknown` に無応答なこと、想定外エラーのログチャンネル通知、コマンド削除後の再起動で登録から消えることを手動で確認する
 - [x] 6.4 README に、ローカル開発の手順（mise、`.env.dev.sops.yaml`（または `.env`）、`MISE_ENV=dev mise exec -- npm run dev`、開発用ギルドへの登録）と、feature の追加方法（`commands/`・`listeners/`・`usecases/`・`views/`・`repository.ts` の役割、依存の向き、usecase を省略してよい条件、`features/index.ts` への登録）を書き、その手順どおりに起動できることを確認する
+- [x] 6.5 `ADMIN_GUILD_ID` を設定に追加し、コマンド登録を `DEV_GUILD_ID` の有無と `scope` で振り分ける（管理用ギルドが未設定なら警告）。テストで登録先と内容を確認し、開発用アプリで `DEV_GUILD_ID` を外して `ADMIN_GUILD_ID` を指定したとき、`/ping` が管理用ギルドにだけ登録され、グローバルが空になることを Discord の API で確認する
 
 ## 7. コンテナと Litestream
 
@@ -60,7 +62,7 @@
 ## 8. CI
 
 - [x] 8.1 `.github/workflows/ci.yaml` の `check` ジョブ（PR と main、oxlint・`oxfmt --check`・tsc・vitest）を作り、型エラーを入れた PR で失敗することを確認する
-- [ ] 8.2 GHCR パッケージ `mk8dx-bot` の Manage Actions access で `oha-4/mk8dx-bot` に Write 権限を付与したうえで、同じワークフローの `image` ジョブ（main のみ、`needs: check`、`ubuntu-24.04-arm`、linux/arm64、`docker/metadata-action` で `ghcr.io/oha-4/mk8dx-bot` に `edge` と `<sha>`。`latest` は含めない）を作る。main への push で `:edge` が公開され、`:latest` の digest が変わっていないことを確認する
+- [x] 8.2 GHCR パッケージ `mk8dx-bot` の Manage Actions access で `oha-4/mk8dx-bot` に Write 権限を付与したうえで、同じワークフローの `image` ジョブ（main のみ、`needs: check`、`ubuntu-24.04-arm`、linux/arm64、`docker/metadata-action` で `ghcr.io/oha-4/mk8dx-bot` に `edge` と `<sha>`。`latest` は含めない）を作る。main への push で `:edge` が公開され、`:latest` の digest が変わっていないことを確認する
 - [x] 8.3 pinact で Action を SHA 固定し、pinact の検査ワークフローを追加して、それが通ることを確認する
 
 ## 9. 本番での並行稼働（統合確認）

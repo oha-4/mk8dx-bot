@@ -1,4 +1,5 @@
 import type { Message } from 'discord.js'
+import type { CommandScope } from './command-scope.ts'
 import { UserFacingError } from './errors.ts'
 import {
     PREFIXES,
@@ -34,6 +35,7 @@ type Execute<Args> = (message: Message<true>, args: Args, invocation: PrefixInvo
 type BaseDefinition = {
     name: string
     aliases?: readonly string[]
+    scope?: CommandScope
     /** 使い方の表示に使う説明 */
     description?: string
 }
@@ -41,6 +43,7 @@ type BaseDefinition = {
 export type PrefixCommand = {
     readonly name: string
     readonly aliases: readonly string[]
+    readonly scope: CommandScope
     readonly usage: string
     run: (message: Message<true>, invocation: PrefixInvocation) => Promise<unknown>
 }
@@ -138,6 +141,7 @@ export function definePrefixCommand(
     return {
         name: definition.name,
         aliases: definition.aliases ?? [],
+        scope: definition.scope ?? 'global',
         usage,
         run: async (message, invocation) => execute(message, parse(invocation.tokens), invocation),
     }

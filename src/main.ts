@@ -37,7 +37,13 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
 })
 const reporter = createErrorReporter({ client, channelId: config.errorLogChannelId, logger })
-const dispatcher = createDispatcher({ registry, reporter, logger })
+// 開発中は開発用ギルドで管理用コマンドも使えるようにする
+const dispatcher = createDispatcher({
+    registry,
+    adminGuildId: config.devGuildId ?? config.adminGuildId,
+    reporter,
+    logger,
+})
 const shutdown = createShutdown({
     stopAccepting: async () => {
         dispatcher.close()
@@ -57,10 +63,16 @@ client.once(Events.ClientReady, async (ready) => {
     try {
         const result = await registerSlashCommands(
             ready.rest,
-            { applicationId: config.applicationId, devGuildId: config.devGuildId },
-            registry.slashCommandsJSON(),
+            { applicationId: config.applicationId, devGuildId: config.devGuildId, adminGuildId: config.adminGuildId },
+            { global: registry.slashCommandsJSON('global'), admin: registry.slashCommandsJSON('admin') },
         )
-        logger.info(result, 'スラッシュコマンドを登録しました')
+        logger.info({ registered: result.registered }, 'スラッシュコマンドを登録しました')
+        if (result.unregisteredAdminCount > 0) {
+            logger.warn(
+                { count: result.unregisteredAdminCount },
+                'ADMIN_GUILD_ID が未設定のため、管理用のスラッシュコマンドを登録しませんでした',
+            )
+        }
     } catch (error) {
         await reporter.report(error, { kind: 'process', source: 'client' })
     }

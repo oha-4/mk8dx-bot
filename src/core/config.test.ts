@@ -10,7 +10,12 @@ const validEnv = {
 
 describe('parseConfig', () => {
     test('正しい環境変数を読み込む', () => {
-        const result = parseConfig({ ...validEnv, DEV_GUILD_ID: '323456789012345678', LOG_LEVEL: 'debug' })
+        const result = parseConfig({
+            ...validEnv,
+            DEV_GUILD_ID: '323456789012345678',
+            ADMIN_GUILD_ID: '423456789012345678',
+            LOG_LEVEL: 'debug',
+        })
         expect(result).toEqual({
             ok: true,
             config: {
@@ -18,6 +23,7 @@ describe('parseConfig', () => {
                 applicationId: '123456789012345678',
                 errorLogChannelId: '223456789012345678',
                 devGuildId: '323456789012345678',
+                adminGuildId: '423456789012345678',
                 databasePath: '/data/bot.db',
                 logLevel: 'debug',
             },
@@ -25,8 +31,9 @@ describe('parseConfig', () => {
     })
 
     test('任意の設定が空文字のときは未設定として扱う', () => {
-        const result = parseConfig({ ...validEnv, DEV_GUILD_ID: '', LOG_LEVEL: '' })
+        const result = parseConfig({ ...validEnv, DEV_GUILD_ID: '', ADMIN_GUILD_ID: '', LOG_LEVEL: '' })
         expect(result.ok && result.config.devGuildId).toBeUndefined()
+        expect(result.ok && result.config.adminGuildId).toBeUndefined()
         expect(result.ok && result.config.logLevel).toBe('info')
     })
 
