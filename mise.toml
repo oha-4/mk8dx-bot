@@ -4,3 +4,4 @@ idiomatic_version_file_enable_tools = ["node"]
 
 [tools]
 pinact = "5.0.0"
+"npm:@fission-ai/openspec" = "1.14.1"
