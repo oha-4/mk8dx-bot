@@ -58,6 +58,7 @@
 - [x] 7.6 `deploy/compose.yaml`（本番用、名前付きボリューム、json-file 10m x 3、`stop_grace_period: 30s`）と `deploy/.env.example` を作り、`docker compose -f deploy/compose.yaml config` が通ることを確認する
 - [x] 7.7 `docs/restore.md` に、自動復元の仕組みと、手動での復元（任意時点を含む）の手順を書き、その手順どおりに別のディレクトリへ復元した DB が開けることを確認する
 - [x] 7.8 `docker history` とイメージ内のファイルを調べ、秘密値が含まれていないことを確認する
+- [x] 7.9 `deploy/litestream.yml`・`deploy/.env.example`・`deploy/compose.yaml`（`LITESTREAM_S3_REGION` の既定値）・`deploy/compose.local.yaml`・`docs/restore.md` の R2 の記述を OCI Object Storage（S3 互換 API）に置き換え、`docker compose -f deploy/compose.yaml config` が通ることを確認する
 
 ## 8. CI
 
@@ -67,10 +68,10 @@
 
 ## 9. 本番での並行稼働（統合確認）
 
-- [ ] 9.1 R2 のバケットとバケット専用の API トークンを用意し、Cloudflare の請求通知を設定する。A1 上で `docker pull ghcr.io/oha-4/mk8dx-bot:edge` が成功することを確認する
-- [ ] 9.2 Dockhand にスタック `mk8dx-bot` を作成して起動し、`/ping` の応答・エラーログチャンネルへの通知・R2 上のレプリカを確認する。あわせて、Python 版の `mk8dx-bot-py-bot-1` が稼働を続け、そのコマンドが変わっていないことを確認する
-- [ ] 9.3 本番で復元のリハーサル（停止 → ボリューム削除 → 起動 → 自動復元）を行い、結果を `docs/restore.md` に追記する
-- [ ] 9.4 1 週間稼働させた後、R2 のメトリクスで Class A 操作数とストレージ使用量を確認し、月換算で無料枠内に収まっていることを `docs/restore.md` に記録する
+- [x] 9.1 ap-osaka-1 に Object Storage のバケット（Standard、非公開）を作り、このバケットのオブジェクト操作だけを許すポリシーを付けた専用 IAM ユーザーで Customer Secret Key を発行する。OCI の Budget でアラートを設定する。A1 上で `docker pull ghcr.io/oha-4/mk8dx-bot:edge` が成功することを確認する
+- [x] 9.2 Dockhand にスタック `mk8dx-bot` を作成して起動し、`/ping` の応答・エラーログチャンネルへの通知・Object Storage 上のレプリカを確認する。あわせて、Python 版の `mk8dx-bot-py-bot-1` が稼働を続け、そのコマンドが変わっていないことを確認する
+- [x] 9.3 本番で復元のリハーサル（停止 → ボリューム削除 → 起動 → 自動復元）を行い、結果を `docs/restore.md` に追記する
+- [ ] 9.4 1 週間稼働させた後、OCI Monitoring で Object Storage のリクエスト数とストレージ使用量を確認し、月換算で Always Free 枠（API リクエスト 50,000 回/月）内に収まっていることを `docs/restore.md` に記録する
 
 ## Workflow follow-up
 
