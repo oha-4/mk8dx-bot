@@ -15,7 +15,7 @@
 - 以後の機能 change が「`src/features/<name>/` を追加し、コマンドとスキーマを export するだけ」で載る構造
 - コマンドのオプションが、定義から推論された型で実行関数に渡ること
 - DB を失ってもレプリカから自動で戻ること
-- ローカルでは Discord トークンと SQLite ファイルだけで起動できること（Litestream と R2 は不要）
+- ローカルでは Discord トークンと SQLite ファイルだけで起動できること（Litestream とオブジェクトストレージは不要）
 
 **Non-Goals:**
 - アプリケーションのテーブル（設定 DB は後続の change で扱う）
@@ -131,7 +131,7 @@ export const pingPrefix = definePrefixCommand({
 | `ADMIN_GUILD_ID` | - | 管理用のコマンド（`scope: 'admin'`）を登録し、実行を許すギルド |
 | `DATABASE_PATH` | ○（イメージ内で既定値 `/data/bot.db`） | SQLite ファイル |
 | `LOG_LEVEL` | - | 既定は `info` |
-| `LITESTREAM_REPLICA_URL` ほか R2 認証情報 | コンテナ内のみ | Litestream が読む。アプリは読まない |
+| `LITESTREAM_REPLICA_URL` ほか Object Storage の認証情報 | コンテナ内のみ | Litestream が読む。アプリは読まない |
 
 代替案は valibot（バンドルが小さい）。サーバー用途ではサイズの利点が薄く、エコシステムの厚い zod を採用する。
 
@@ -167,13 +167,14 @@ export const pingPrefix = definePrefixCommand({
 entrypoint.sh
   1. litestream restore -if-db-not-exists -if-replica-exists $DATABASE_PATH
   2. exec litestream replicate -exec "node dist/main.js"
-       |- WAL を監視し、R2 に 1 時間間隔で同期
+       |- WAL を監視し、Object Storage に 1 時間間隔で同期
        |- SIGTERM を子（node）に転送し、子の終了後に最終同期して終了
 ```
 
 - 復元をマイグレーションより前に確実に行うため、この順序をコンテナの起動シーケンスで保証する（spec: data-persistence の自動復元）。
-- `sync-interval: 1h`。この bot のデータ（設定や履歴）は、A1 が突然失われた場合に最大 1 時間分を失っても許容できる。停止時（デプロイや再起動）は最終同期するので失わない。Litestream は変更があった区間しかアップロードしないので、R2 の Class A は同期が月最大約 720 回と、コンパクションやスナップショットを合わせても無料枠の 100 万回に対して十分小さい。稼働後に R2 のメトリクスで確認する。代替案は `10s`（失うのは最大 10 秒分。無料枠には収まる）と、Litestream をやめて日次の `VACUUM INTO` を R2 に上げる方法（起動時の自動復元を自前で作る必要がある）。
+- `sync-interval: 1h`。この bot のデータ（設定や履歴）は、A1 が突然失われた場合に最大 1 時間分を失っても許容できる。停止時（デプロイや再起動）は最終同期するので失わない。Litestream は変更があった区間しかアップロードしないので、同期は月最大約 720 回で、コンパクションやスナップショット、保持期間の整理を合わせても Always Free 枠の API リクエスト 50,000 回/月に収まる見込み。稼働後に OCI Monitoring の Object Storage のメトリクスで確認する。代替案は `10s`（失うのは最大 10 秒分。同期だけで月最大約 26 万回になり、無料枠を超える）と、Litestream をやめて日次の `VACUUM INTO` を Object Storage に上げる方法（起動時の自動復元を自前で作る必要がある）。
 - スナップショットは 24 時間ごと、保持は 7 日（任意時点への復元の範囲）。
+- レプリカ先は A1 と同じテナンシーの OCI Object Storage（ap-osaka-1、Standard、非公開バケット）。Litestream からは S3 互換 API で接続し、endpoint は `https://<namespace>.compat.objectstorage.ap-osaka-1.oraclecloud.com`、region は `ap-osaka-1`。認証は Customer Secret Key で、キーはユーザーに紐づくため、専用の IAM ユーザーとグループを作り、ポリシーでこのバケットのオブジェクト操作だけを許す。請求と認証情報を OCI の 1 か所にまとめ、管理先を増やさないため。代替案は Cloudflare R2。OCI と障害ドメインが分かれ、無料枠の操作数も多いが、別アカウントの管理が増えるため採用しない。
 - Litestream の arm64 バイナリは、公式イメージから multi-stage でコピーし、バージョンを固定する。
 - ローカル開発では Litestream を使わず、`npm run dev` で直接起動する。開発用の秘密値は SOPS（age）で暗号化した `.env.dev.sops.yaml` に置き、`MISE_ENV=dev` のときだけ読まれる `mise.dev.toml` の `[env]` で復号して渡す。復元の確認は `deploy/compose.local.yaml`（`file://` のレプリカ）で行う。
 
@@ -225,15 +226,17 @@ entrypoint.sh
 - [プレフィックスの位置引数の解釈が、旧版の書式と合わないコマンドがある] → `definePrefixCommand` の `parse` で置き換えられるようにしておく。どの書式を採るかは、各機能を移植する change で旧版の挙動から決める。
 - [起動のたびのグローバル登録で、反映待ちの間に古いコマンドが実行される] → dispatcher で未知のコマンドに応答する（spec: bot-runtime）。
 - [A1 1 台が単一障害点] → データは Litestream で守る。可用性は単一ホストのまま受け入れる。
+- [本体とレプリカが同じ OCI テナンシーにある] → ホストやブートボリュームを失ってもレプリカは残るが、テナンシーの停止や削除では両方を失う。これは受け入れ、必要になったら手元への定期的な `litestream restore` でのコピーで補う。
+- [Litestream が OCI を S3 互換サービスとして公式には挙げていない] → 0.5.17 では `endpoint` を指定すると path-style になり、AWS SDK の aws-chunked のチェックサムも無効になる（ソースで確認）ため、OCI 向けの追加設定は置かない。本番前に replicate・自動復元・任意時点の復元を実地で確認する。
 - [自前の `defineSlashCommand` / `definePrefixCommand` の保守コスト] → 対応する型を絞り、Discord の API 型（`discord-api-types`）を基にして作る。
 
 ## Migration Plan
 
 1. Discord Developer Portal で beta 用のアプリケーションを作り、Message Content intent を有効にしてトークンを発行する。開発用ギルドに招待する。
-2. Cloudflare R2 にバケットを作り、そのバケット専用の API トークン（Object Read & Write）を発行する。
+2. OCI の ap-osaka-1 に Object Storage のバケット（Standard、非公開）を作る。専用の IAM ユーザーとグループを作り、このバケットのオブジェクト操作だけを許すポリシーを付けて、Customer Secret Key を発行する。
 3. GHCR パッケージ `mk8dx-bot` の Manage Actions access で、`oha-4/mk8dx-bot` に Write 権限を付与する。main に merge し、`:edge` が公開され、`:latest` が変わっていないことを確認する。
-4. Cloudflare の請求通知を設定し、R2 の使用量が無料枠に近づいたら気付けるようにする。
-5. Dockhand でスタック `mk8dx-bot` を作成し、`.env` を設定して起動する。`/ping` とエラー通知、R2 にレプリカが作られていることを確認する。
+4. OCI の Budget でアラートを設定し、Always Free 枠を超えて課金が発生したら気付けるようにする。
+5. Dockhand でスタック `mk8dx-bot` を作成し、`.env` を設定して起動する。`/ping` とエラー通知、Object Storage にレプリカが作られていることを確認する。
 6. 復元のリハーサル: スタックを停止し、ボリュームを削除して起動し、自動で復元されることを確認する。
 
 ロールバック: 新しいスタックを停止・削除するだけでよい。Python 版には影響しない。

@@ -11,11 +11,11 @@ snapshot:
 dbs:
   - path: ${DATABASE_PATH}
     replica:
-      # 本番: s3://<bucket>/<path>（Cloudflare R2）、ローカル検証: file:///replica
+      # 本番: s3://<bucket>/<path>（OCI Object Storage）、ローカル検証: file:///replica
       url: ${LITESTREAM_REPLICA_URL}
       # A1 が突然失われたときに失うのは最大 1 時間分にする（停止時は最終同期するため失わない）
       sync-interval: 1h
-      # R2 では https://<account_id>.r2.cloudflarestorage.com と auto。認証情報は
-      # LITESTREAM_ACCESS_KEY_ID / LITESTREAM_SECRET_ACCESS_KEY から読まれる
+      # OCI では https://<namespace>.compat.objectstorage.ap-osaka-1.oraclecloud.com と ap-osaka-1。
+      # 認証情報（Customer Secret Key）は LITESTREAM_ACCESS_KEY_ID / LITESTREAM_SECRET_ACCESS_KEY から読まれる
       endpoint: ${LITESTREAM_S3_ENDPOINT}
       region: ${LITESTREAM_S3_REGION}

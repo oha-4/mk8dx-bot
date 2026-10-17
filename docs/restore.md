@@ -1,6 +1,6 @@
 # DB の復元
 
-bot のデータは SQLite（コンテナ内の `/data/bot.db`、ボリューム `mk8dx-bot-data`）に保存され、Litestream が Cloudflare R2 へ継続的に複製している。
+bot のデータは SQLite（コンテナ内の `/data/bot.db`、ボリューム `mk8dx-bot-data`）に保存され、Litestream が OCI Object Storage（A1 と同じテナンシー、ap-osaka-1）へ継続的に複製している。
 
 ## 仕組み
 
@@ -9,7 +9,7 @@ bot のデータは SQLite（コンテナ内の `/data/bot.db`、ボリューム
   1. litestream restore -if-db-not-exists -if-replica-exists /data/bot.db
        DB ファイルがなく、レプリカがあれば最新の状態を復元する。DB があれば何もしない
   2. litestream replicate -exec "node /app/dist/main.js"
-       1 時間ごとに変更を R2 へ同期する。停止時は bot の終了後に最終同期する
+       1 時間ごとに変更を Object Storage へ同期する。停止時は bot の終了後に最終同期する
 ```
 
 - A1 が突然失われた場合、失うデータは最大で直近の 1 時間分。停止（デプロイや再起動）では失わない
@@ -67,11 +67,11 @@ docker compose run --rm --no-deps --entrypoint sh -v "$PWD/restore:/restore" bot
 docker compose start bot
 ```
 
-`/data/bot.db` があるので起動時の自動復元は行われず、入れ替えた DB がそのまま使われる。以後の変更は通常どおり R2 に複製される。
+`/data/bot.db` があるので起動時の自動復元は行われず、入れ替えた DB がそのまま使われる。以後の変更は通常どおり Object Storage に複製される。
 
 ## ローカルでの確認
 
-`deploy/compose.local.yaml` は、レプリカを R2 ではなくボリューム（`file:///replica/bot`）に置く。上の手順は、`cd /opt/hawser-stacks/mk8dx-bot` の代わりに次のようにすれば、そのままローカルで試せる。
+`deploy/compose.local.yaml` は、レプリカを Object Storage ではなくボリューム（`file:///replica/bot`）に置く。上の手順は、`cd /opt/hawser-stacks/mk8dx-bot` の代わりに次のようにすれば、そのままローカルで試せる。
 
 ```sh
 alias ls-run='MISE_ENV=dev mise exec -- docker compose -f deploy/compose.local.yaml run --rm --no-deps --entrypoint sh -v "$PWD/restore:/restore" bot -c'
