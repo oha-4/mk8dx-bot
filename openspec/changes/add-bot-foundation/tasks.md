@@ -68,9 +68,9 @@
 
 ## 9. 本番での並行稼働（統合確認）
 
-- [ ] 9.1 ap-osaka-1 に Object Storage のバケット（Standard、非公開）を作り、このバケットのオブジェクト操作だけを許すポリシーを付けた専用 IAM ユーザーで Customer Secret Key を発行する。OCI の Budget でアラートを設定する。A1 上で `docker pull ghcr.io/oha-4/mk8dx-bot:edge` が成功することを確認する
-- [ ] 9.2 Dockhand にスタック `mk8dx-bot` を作成して起動し、`/ping` の応答・エラーログチャンネルへの通知・Object Storage 上のレプリカを確認する。あわせて、Python 版の `mk8dx-bot-py-bot-1` が稼働を続け、そのコマンドが変わっていないことを確認する
-- [ ] 9.3 本番で復元のリハーサル（停止 → ボリューム削除 → 起動 → 自動復元）を行い、結果を `docs/restore.md` に追記する
+- [x] 9.1 ap-osaka-1 に Object Storage のバケット（Standard、非公開）を作り、このバケットのオブジェクト操作だけを許すポリシーを付けた専用 IAM ユーザーで Customer Secret Key を発行する。OCI の Budget でアラートを設定する。A1 上で `docker pull ghcr.io/oha-4/mk8dx-bot:edge` が成功することを確認する
+- [x] 9.2 Dockhand にスタック `mk8dx-bot` を作成して起動し、`/ping` の応答・エラーログチャンネルへの通知・Object Storage 上のレプリカを確認する。あわせて、Python 版の `mk8dx-bot-py-bot-1` が稼働を続け、そのコマンドが変わっていないことを確認する
+- [x] 9.3 本番で復元のリハーサル（停止 → ボリューム削除 → 起動 → 自動復元）を行い、結果を `docs/restore.md` に追記する
 - [ ] 9.4 1 週間稼働させた後、OCI Monitoring で Object Storage のリクエスト数とストレージ使用量を確認し、月換算で Always Free 枠（API リクエスト 50,000 回/月）内に収まっていることを `docs/restore.md` に記録する
 
 ## Workflow follow-up
